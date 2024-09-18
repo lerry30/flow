@@ -1,0 +1,24 @@
+services:
+  flow1:
+    image: backend:latest
+    ports: 
+      - 1111:3000
+    env_file:
+      - /etc/app.env
+    command: ["npm", "run", "start"]
+
+  flow2:
+    image: backend:latest
+    ports: 
+      - 2222:3000
+    env_file:
+      - /etc/app.env
+    command: ["npm", "run", "start"]
+
+  flow3:
+    image: backend:latest
+    ports: 
+      - 3333:3000
+    env_file:
+      - /etc/app.env
+    command: ["npm", "run", "start"]

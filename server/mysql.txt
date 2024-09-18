@@ -1,0 +1,49 @@
+CREATE DATABASE debt_tracker_db;
+USE debt_tracker_db;
+
+CREATE TABLE info(
+	id INT PRIMARY KEY AUTO_INCREMENT, 
+	firstname VARCHAR(255) NOT NULL, 
+	lastname VARCHAR(255) NOT NULL, 
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE employees(
+	id INT PRIMARY KEY AUTO_INCREMENT, 
+    info_id INT NOT NULL,
+	username VARCHAR(255) NOT NULL UNIQUE,
+	password VARCHAR(255) NOT NULL, 
+    FOREIGN KEY(info_id) REFERENCES info(id)
+);
+
+CREATE TABLE players(
+	id INT PRIMARY KEY AUTO_INCREMENT, 
+    info_id INT NOT NULL,
+    status INT DEFAULT 0,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    added_by INT NOT NULL,
+    FOREIGN KEY(info_id) REFERENCES info(id),
+    FOREIGN KEY (added_by) REFERENCES employees(id)
+);
+
+CREATE TABLE transactions (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    player_id INT NOT NULL,
+    units INT UNSIGNED NOT NULL,
+    action ENUM("IN", "OUT") NOT NULL,
+    prev_status INT NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    added_by INT NOT NULL,
+    FOREIGN KEY (player_id) REFERENCES players(id),
+    FOREIGN KEY (added_by) REFERENCES employees(id)
+);
+
+-- Adding indexes for optimization
+CREATE INDEX idx_info_id ON employees(info_id);
+CREATE INDEX idx_player_id ON transactions(player_id);
+
+
+
+mysqldump -u root -p debt_tracker_db > debt_tracker_db.sql
+mysql -u root -p debt_tracker_db < ~/flow-server/debt_tracker_db.sql
+
