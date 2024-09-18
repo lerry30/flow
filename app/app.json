@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "Flow",
+    "slug": "Flow",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.jpeg",
+    "scheme": "app",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.jpg",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.jpeg",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.lerry.flow"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "760cc873-ebac-41f1-b467-1883ca926a0f"
+      }
+    },
+    "owner": "lerry"
+  }
+}
