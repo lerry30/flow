@@ -1,9 +1,9 @@
-import { Text } from 'react-native';
+import { Text, View } from 'react-native';
 import { Tabs } from 'expo-router';
 
 import Octicons from '@expo/vector-icons/Octicons';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import AntDesign from '@expo/vector-icons/AntDesign';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 
 const TabLayout = () => {
     return (
@@ -19,20 +19,31 @@ const TabLayout = () => {
             }
         }}>
             <Tabs.Screen 
-                name="home"
+                name="players"
                 options={{
-                    tabBarLabel: ({color}) => <Text className="font-pbold text-[12px]" style={{color: `${color}`}}>Home</Text>,
+                    tabBarLabel: ({color}) => <Text className="font-pbold text-[12px]" style={{color: `${color}`}}>Players</Text>,
                     tabBarIcon: ({color}) => (
-                        <Ionicons name="home-sharp" size={24} color={color} />
+                        <MaterialCommunityIcons name="account-group-outline" size={30} color={color} />
                     )
                 }}
             />
             <Tabs.Screen
                 name="create"
                 options={{
-                    tabBarLabel: ({color}) => <Text className="font-pbold text-[12px]" style={{color: `${color}`}}></Text>,
+                    tabBarLabel: ({color}) => <Text className="font-pbold text-[12px]" style={{color: `${color}`}}>Add Player</Text>,
                     tabBarIcon: ({color}) => (
-                        <AntDesign name="pluscircleo" size={38} color={color} />
+                        <MaterialCommunityIcons name="account-plus-outline" size={30} color={color} />
+                    )
+                }}
+            />
+            <Tabs.Screen
+                name="pnl"
+                options={{
+                    tabBarLabel: ({color}) => <Text className="font-pbold text-[12px]" style={{color: `${color}`}}>P & L</Text>,
+                    tabBarIcon: ({color}) => (
+                        <View className="rotate-[90deg]">
+                            <FontAwesome6 name="arrow-right-arrow-left" size={20} color={color} />
+                        </View>
                     )
                 }}
             />

@@ -46,7 +46,7 @@ const Create = () => {
             if(result) {
                 setPlayerData({firstname: '', lastname: ''});
                 setAmount(0);
-                router.push('(tabs)/home');
+                router.push('(tabs)/players');
             }
         } catch(error) {
             console.log(error?.message);
@@ -66,7 +66,7 @@ const Create = () => {
     return (
         <SafeAreaView>
             <ScrollView>
-                <View className="flex-1 w-full min-h-screen flex flex-col p-4 bg-white">
+                <View className="flex-1 w-full min-h-screen flex flex-col px-4 bg-white">
                     <View className="w-[90px]">
                         <AppLogo style={{width: 'fit-content'}}/>
                     </View>

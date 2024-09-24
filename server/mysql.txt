@@ -38,6 +38,26 @@ CREATE TABLE transactions (
     FOREIGN KEY (added_by) REFERENCES employees(id)
 );
 
+CREATE TABLE profits (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    revenue INT UNSIGNED NOT NULL,
+    revenue_note VARCHAR(255) NOT NULL,
+    added_by INT NOT NULL,
+    entry_date DATE NOT NULL,
+    entry_time TIME NOT NULL,
+    FOREIGN KEY (added_by) REFERENCES employees(id)
+);
+
+CREATE TABLE losses (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    expense INT UNSIGNED NOT NULL,
+    expense_note VARCHAR(255) NOT NULL,
+    added_by INT NOT NULL,
+    entry_date DATE NOT NULL,
+    entry_time TIME NOT NULL,
+    FOREIGN KEY (added_by) REFERENCES employees(id)
+);
+
 -- Adding indexes for optimization
 CREATE INDEX idx_info_id ON employees(info_id);
 CREATE INDEX idx_player_id ON transactions(player_id);

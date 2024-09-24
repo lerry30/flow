@@ -8,7 +8,7 @@ import { urls } from '@/constants/urls';
 import { toNumber, formattedNumber } from '@/utils/number';
 import { formattedDateAndTime } from '@/utils/datetime';
 
-import FlowStatsChart from '@/components/FlowStatsChart';
+//import FlowStatsChart from '@/components/FlowStatsChart';
 import AppLogo from '@/components/AppLogo';
 
 const Summary = () => {
@@ -21,6 +21,9 @@ const Summary = () => {
     const [overAllOuts, setOverAllOuts] = useState(0);
     const [net, setNet] = useState(0);
     const [loading, setLoading] = useState(false);
+
+    const [overallNet, setOverallNet] = useState(0);
+    const [netToday, setNetToday] = useState(0);
 
     const lastUpdate = useRef(null);
     const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
@@ -38,7 +41,7 @@ const Summary = () => {
                 const insMonthCollections = {jan: 0, feb: 0, mar: 0, apr: 0, may: 0, jun: 0, jul: 0, aug: 0, sep: 0, oct: 0, nov: 0, dec: 0};
                 const outsMonthCollections = {jan: 0, feb: 0, mar: 0, apr: 0, may: 0, jun: 0, jul: 0, aug: 0, sep: 0, oct: 0, nov: 0, dec: 0};
 
-                setDisplayGraph(transactions.length > 0);
+                //setDisplayGraph(transactions.length > 0);
                 for(const transaction of transactions) {
                     const {units, action, prev_status, timestamp} = transaction;
                     const nUnits = toNumber(units);
@@ -72,9 +75,39 @@ const Summary = () => {
         }
     }
 
+    const getOverallNet = async () => {
+        try {
+            setLoading(true);
+            const response = await sendJSON(urls['overall'], {}, 'POST');
+            if(response) {
+                setOverallNet(response?.overallNet);
+            }
+        } catch(error) {
+            console.log(error?.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const getNetForTheDay = async () => {
+        try {
+            setLoading(true);
+            const response = await sendJSON(urls['nettoday'], {}, 'POST');
+            if(response) {
+                setNetToday(response?.today); 
+            }
+        } catch(error) {
+            console.log(error?.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
     useFocusEffect(
         useCallback(() => {
             getTransactions();
+            getOverallNet();
+            getNetForTheDay();
         }, [])
     );
 
@@ -89,12 +122,12 @@ const Summary = () => {
     return (
         <SafeAreaView>
             <ScrollView>
-                <View className="flex-1 w-full min-h-screen p-4 bg-white">
+                <View className="flex-1 w-full min-h-screen px-4 bg-white">
                     <View className="w-[90px]">
                         <AppLogo style={{width: 'fit-content'}}/>
                     </View>
                     <Text className="font-pbold text-lg py-2">Summary</Text>
-                    { displayGraph && (
+                    {/*{ displayGraph && (
                         <View>
                             <FlowStatsChart 
                                 months={months}
@@ -108,8 +141,18 @@ const Summary = () => {
                                 <Text className="text-primary">In</Text>
                             </View>
                         </View>
-                    )}
-                    <View className="w-full flex-1 space-y-2 mt-2">
+                    )}*/}
+                    <View className="w-full space-y-2 mt-2 mb-10">
+                        <View className="flex flex-row justify-between">
+                            <Text className="font-psemibold text-primary">Net for the Day:</Text>
+                            <Text className="font-psemibold text-primary text-xl">{netToday<0?`-$${formattedNumber(Math.abs(netToday))}`:`$${formattedNumber(netToday)}`}</Text>
+                        </View>
+                        <View className="flex flex-row justify-between">
+                            <Text className="font-psemibold text-primary">Overall Net:</Text>
+                            <Text className="font-psemibold text-primary text-xl">{overallNet<0?`-$${formattedNumber(Math.abs(overallNet))}`:`$${formattedNumber(overallNet)}`}</Text>
+                        </View>
+                    </View>
+                    <View className="w-full space-y-2 mt-2">
                         <View className="flex flex-row justify-between">
                             <Text className="font-psemibold text-primary">STATS from last update:</Text>
                             <Text className="font-psemibold text-primary/80">{formattedDateAndTime(new Date(lastUpdate.current))}</Text>

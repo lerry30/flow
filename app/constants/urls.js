@@ -11,4 +11,12 @@ export const urls = {
     gettransactions: `${serverDomain}/api/transactions/player`,
     search: `${serverDomain}/api/players/search`,
     history: `${serverDomain}/api/transactions/`,
+    getpnl: `${serverDomain}/api/pnl/get`,
+    newpnl: `${serverDomain}/api/pnl/add`,
+    getselectedpnl: `${serverDomain}/api/pnl/selected`,
+    updatepnl: `${serverDomain}/api/pnl/update`,
+    deletepnl: `${serverDomain}/api/pnl/delete`,
+    monthoperations: `${serverDomain}/api/pnl/monthoperations`,
+    overall: `${serverDomain}/api/pnl/overall`,
+    nettoday: `${serverDomain}/api/pnl/nettoday`,
 }

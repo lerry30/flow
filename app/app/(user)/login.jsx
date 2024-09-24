@@ -38,7 +38,7 @@ const LogIn = () => {
                 await saveToLocal('user', nUser);
                 saveUser(nUser);
                 setUserData({ email: '', password: '' });
-                router.push('/(tabs)/home');
+                router.push('/(tabs)/players');
             } catch(error) {
                 setError(state => ({...state, server: error?.message}));
                 console.log('Function: login ', error?.message);

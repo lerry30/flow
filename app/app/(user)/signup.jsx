@@ -39,7 +39,7 @@ const SignUp = () => {
                 saveUser(nUser);
 
                 setUserData({ firstname: '', lastname: '', username: '', password: '' });
-                router.push('/(tabs)/home');
+                router.push('/(tabs)/players');
             } catch(error) {
                 console.log(error?.message);
                 setError(state =>({...state, server: error?.message}));

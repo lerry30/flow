@@ -65,7 +65,7 @@ const getPlayers = requestHandler(async (req, res) => {
     if(!players) {
         throw {status: 400, message: 'There\'s something wrong.'};
     }
-    
+
     res.status(200).json({players});
 });
 

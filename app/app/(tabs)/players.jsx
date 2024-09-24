@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState, useRef } from 'react';
 import { zUser } from '@/store/user';
-import { useRouter, Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { sendJSON } from '@/utils/send';
 import { urls } from '@/constants/urls';
 import { formattedNumber } from '@/utils/number';
@@ -87,12 +87,12 @@ const Home = () => {
         return (
             <TouchableOpacity activeOpacity={0.9} onPress={() => displayActions(index)} className="relative" style={{marginBottom: isSelected ? 50 : 8}}>
                 <View className="w-[120px] h-[50px] flex flex-row justify-between items-end px-4 py-2 rounded-b-xl bg-lightshade" style={{position: 'absolute', right: 0, bottom: isSelected ? -40 : 0}}>
-                    <Link href={`(transactions)/${item.playerId}`}>
+                    <TouchableOpacity activeOpacity={0.9} onPress={()=>router.push(`(transactions)/${item.playerId}`)}>
                         <FontAwesome5 name="scroll" size={24} color="#2e2e2e" />
-                    </Link>
-                    <Link href={`(record)/${item.playerId}`}>
+                    </TouchableOpacity>
+                    <TouchableOpacity activeOpacity={0.9} onPress={()=>router.push(`(record)/${item.playerId}`)}>
                         <MaterialCommunityIcons name="hand-coin" size={28} color="black" />
-                    </Link>
+                    </TouchableOpacity>
                 </View>
                 <View className="min-h-[70px] rounded-xl p-4 bg-lightshade">
                     <View className="flex flex-row justify-between items-end">
@@ -118,7 +118,7 @@ const Home = () => {
 
     return (
         <SafeAreaView className="flex-1">
-            <View className="flex-1 w-full min-h-screen p-4 bg-white">
+            <View className="flex-1 w-full min-h-screen px-4 bg-white">
                 <View className="w-[90px]">
                     <AppLogo style={{width: 'fit-content'}}/>
                 </View>

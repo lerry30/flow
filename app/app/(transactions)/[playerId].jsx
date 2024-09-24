@@ -2,8 +2,7 @@ import { Text, View, FlatList, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { sendJSON } from '@/utils/send';
 import { urls } from '@/constants/urls';
 import { formattedDateAndTime, areDatesEqual } from '@/utils/datetime';
@@ -84,18 +83,10 @@ const Transactions = () => {
         }
     }
 
-    useFocusEffect(
-        useCallback(() => {
-            getPlayer();    
-            getTransactionHistory();
-            return () => {
-                setPlayer({name: '', status: 0, addedBy: '', createdAt: ''});
-                setTransactions([]);
-                setPlayerAlert(false);
-                setLoading(false);
-            }
-        }, [playerId])
-    );
+    useLayoutEffect(() => {
+        getPlayer();    
+        getTransactionHistory();
+    }, [])
 
     const renderItem = ({item, index}) => {
         const isOut = item.action === 'OUT';
@@ -136,7 +127,7 @@ const Transactions = () => {
 
     return (
         <SafeAreaView className="flex-1">
-            <View className="flex-1 w-full p-4 bg-white">
+            <View className="flex-1 w-full px-4 bg-white">
                 <View className="w-[90px]">
                     <AppLogo style={{ width: 'fit-content' }} />
                 </View>
@@ -168,7 +159,7 @@ const Transactions = () => {
                 </View>
             </View>
 
-            {playerAlert && <CustomAlert visible={true} onClose={() => router.push('(tabs)/home')} title="Player not Found" message="There's something wrong." />}
+            {playerAlert && <CustomAlert visible={true} onClose={() => router.push('(tabs)/players')} title="Player not Found" message="There's something wrong." />}
             <StatusBar style="dark" />
         </SafeAreaView>
     );

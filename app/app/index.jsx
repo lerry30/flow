@@ -23,7 +23,7 @@ const HomePage = () => {
 
                 console.log(userStatus.message);
                 if(!userStatus?.ok) throw new Error(userStatus?.message);
-                router.push('(tabs)/home');
+                router.push('(tabs)/players');
             } catch(error) {
                 console.log('Init landing page: ', error?.message);
             }
@@ -33,7 +33,7 @@ const HomePage = () => {
     return (
         <View className="relative flex-1 size-screen min-h-screen px-4 pb-10 flex justify-end">
             <Image className="absolute h-[100%] aspect-square -top-[14vh] -left-[40vh]" source={BackgroundImage} resizeMode="contain"/>
-            <CustomButton title="Get Started" onPress={() => router.push('/(tabs)/home')} contClassName="w-full mt-[40px]">
+            <CustomButton title="Get Started" onPress={() => router.push('/(tabs)/players')} contClassName="w-full mt-[40px]">
                 <AntDesign name="arrowright" size={30} color="white" />
             </CustomButton>
         </View>

@@ -5,9 +5,9 @@ export const requestHandler = (controller) => {
         } catch(error) {
             let message = error?.message;
             let status = error?.status || 500;
+            console.log('Error: ', message);
             if(error instanceof Error) message = 'There\'s something wrong.';
 
-            console.log(status, message);
             res.status(status).json({message});
         }
     }

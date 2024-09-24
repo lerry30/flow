@@ -8,6 +8,7 @@ import userRoutes from './routes/userRoutes.js';
 import playerRoutes from './routes/playerRoutes.js';
 import recordRoutes from './routes/recordRoutes.js';
 import transactionRoutes from './routes/transactionRoutes.js';
+import profitNLossRoutes from './routes/profitNLossRoutes.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 import { getDir } from './utils/fileDir.js';
 
@@ -36,6 +37,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/players', playerRoutes);
 app.use('/api/records', recordRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/pnl', profitNLossRoutes);
 
 // fall back when route is not found
 app.use(notFound);

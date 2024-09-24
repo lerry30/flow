@@ -1,8 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { sendJSON } from '@/utils/send';
 import { urls } from '@/constants/urls';
@@ -39,7 +38,7 @@ const Record = () => {
             const response = await sendJSON(urls['borrowpay'], {playerId, action, amount: nAmount}, 'PUT');
             if(response) {
                 setAmount(0);
-                router.push('(tabs)/home');
+                router.push('(tabs)/players');
             }
         } catch(error) {
             setAmountAlert(true);
@@ -69,19 +68,9 @@ const Record = () => {
         }
     }
 
-    useFocusEffect(
-        useCallback(() => {
-            getPlayer();    
-            return () => {
-                setPlayer({});
-                setAmount(0);
-                setAction({plus: false, minus: true});
-                setLoading(false);
-                setPlayerAlert(false);
-                setAmountAlert(false);
-            }
-        }, [playerId])
-    );
+    useLayoutEffect(() => {
+        getPlayer();    
+    }, [])
 
     if(loading) {
         return (
@@ -94,7 +83,7 @@ const Record = () => {
     return (
         <SafeAreaView>
             <ScrollView>
-                <View className="flex-1 w-full min-h-screen flex flex-col p-4 bg-white">
+                <View className="flex-1 w-full min-h-screen flex flex-col px-4 bg-white">
                     <View className="w-[90px]">
                         <AppLogo style={{width: 'fit-content'}}/>
                     </View>
@@ -146,7 +135,7 @@ const Record = () => {
                     <CustomButton title="Input Data" onPress={inputData} contClassName="w-full mt-4" />
                 </View>
             </ScrollView>
-            {playerAlert && <CustomAlert visible={true} onClose={()=>router.push('(tabs)/home')} title="Player not Found" message="There's something wrong." />}
+            {playerAlert && <CustomAlert visible={true} onClose={()=>router.push('(tabs)/players')} title="Player not Found" message="There's something wrong." />}
             {amountAlert && <CustomAlert visible={true} onClose={()=>setAmountAlert(false)} title="Number of Units" message="An error occurred. Unable to record the input, possibly due to a zero value. Please try again." />}
             <StatusBar style="dark" />
         </SafeAreaView>
