@@ -1,15 +1,24 @@
 export const currentTime = () => {
-    const date = new Date(Date.now());
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    return `${hours}:${minutes}:${seconds}`;
+    const formatter = new Intl.DateTimeFormat('en-AU', {
+        timeZone: process.env.TIMEZONE,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+    });
+
+    const dateParts = formatter.formatToParts(new Date());
+    const nDateParts = {};
+    for(const part of dateParts)
+        nDateParts[part.type] = part.value;
+    const formattedDate = `${nDateParts.hour}:${nDateParts.minute}:${nDateParts.second}`;
+
+    return formattedDate;
 };
 
 export const formattedDate = (date) => {
-    const offset = date.getTimezoneOffset();
-    const nDate = new Date(date.getTime() - (offset * 60 * 1000));
-    return nDate.toISOString().split('T')[0];
+    const nDate = new Date(date).toLocaleString('en-US', {timeZone: process.env.TIMEZONE});
+    const [month, day, year] = nDate.split(',')[0].split('/');
+    return `${year}-${month}-${day}`;
 };
 
 export const isValidDate = (dateString) => {

@@ -1,54 +1,61 @@
-import { useState, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Calendar } from 'react-native-calendars';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { formattedDate } from '@/utils/datetime';
+import { formattedDate, toTimeZoneDate } from '@/utils/datetime';
 import { useRouter } from 'expo-router';
 import { sendJSON } from '@/utils/send';
 import { urls } from '@/constants/urls';
+import { zUser } from '@/store/user';
 
-import AppLogo from '@/components/AppLogo';
+import Header from '@/components/Header';
 
 const PNL = () => {
     const [selectedDate, setSelectedDate] = useState('');
-    const [currentMonth, setCurrentMonth] = useState(formattedDate(new Date()).slice(0, 7));
+    const [currentMonth, setCurrentMonth] = useState(formattedDate(toTimeZoneDate(new Date())).slice(0, 7));
     const [monthOperations, setMonthOperations] = useState({});
     const [loading, setLoading] = useState(false);
 
-    const today = new Date();
+    const today = toTimeZoneDate(new Date());
     const router = useRouter();
+    const intervalId = useRef(undefined);
+    const RELOADTIME = 10000; // should not be lower to 9 seconds
+
+    const getDaysOfOperationsInAMonth = async () => {
+        try {
+            if(currentMonth) {
+                const response = await sendJSON(urls['monthoperations'], {currentMonth}, 'POST');
+                if(response) {
+                    const prevOperations = {};
+                    const operations = response?.operations || [];
+                    for(const opt of operations) {
+                        const date = formattedDate(new Date(opt?.entry_date));
+                        prevOperations[date] = {
+                            selected: true,
+                            marked: true,
+                            selectedColor: '#dc3f1c'
+                        }
+                    }
+
+                    setMonthOperations(prevOperations);
+                }
+            }
+        } catch(error) {
+            console.log(error?.message);
+        }
+    }
 
     useFocusEffect(
         useCallback(() => {
-            (async () => {
-                try {
-                    setLoading(true);
-                    if(currentMonth) {
-                        const response = await sendJSON(urls['monthoperations'], {currentMonth}, 'POST');
-                        if(response) {
-                            setMonthOperations({});
-                            const operations = response?.operations || [];
-                            for(const opt of operations) {
-                                const date = formattedDate(new Date(opt?.entry_date));
-                                console.log(date);
-                                setMonthOperations(state => ({...state, 
-                                    [date]: {
-                                        selected: true,
-                                        marked: true,
-                                        selectedColor: '#dc3f1c'
-                                    }
-                                }));
-                            }
-                        }
-                    }
-                } catch(error) {
-                    console.log(error?.message);
-                } finally {
-                    setLoading(false);
-                }
-            })();
-            return () => {}
+            if(!zUser.getState()?.username) router.push('(user)/login');
+            getDaysOfOperationsInAMonth();
+
+            intervalId.current = setInterval(() => getDaysOfOperationsInAMonth(), RELOADTIME);
+
+            return () => {
+                clearInterval(intervalId.current);
+            }
         }, [currentMonth])
     );
 
@@ -63,15 +70,12 @@ const PNL = () => {
     return (
         <SafeAreaView>
             <View className="flex-1 w-full min-h-screen flex flex-col px-4 bg-white">
-                <View className="w-[90px]">
-                    <AppLogo style={{width: 'fit-content'}}/>
-                </View>
+                <Header />
                 <Text className="font-pbold text-lg py-2">P & L Calendar</Text>
                 <Calendar
+                    current={`${currentMonth}-01`}
                     onDayPress={(day) => {
-                        const selectedInMilli = day.timestamp;
-                        const tomorrowInMilli = today.getTime() + 1000 * 60 * 60 * 24;
-                        if(selectedInMilli < today.getTime()) {    
+                        if(day.timestamp < today.getTime()) {    
                             setSelectedDate(day.dateString);
                             router.push(`(profitNLoss)/${day.dateString}`);
                         }
@@ -95,13 +99,14 @@ const PNL = () => {
                             selectedColor: 'teal'
                         }
                     }}
+                    timeZone="Australia/Brisbane"
                     theme={{
                         backgroundColor: '#ffffff',
                         calendarBackground: '#ffffff',
                         textSectionTitleColor: '#2e2e2eaa',
                         selectedDayBackgroundColor: '#00adf5',
                         selectedDayTextColor: '#ffffff',
-                        todayTextColor: '#ffffff',
+                        todayTextColor: '#2e2e2e',
                         dayTextColor: '#2d4150',
                         textDisabledColor: '#d9e1e8',
                         arrowColor: 'black',

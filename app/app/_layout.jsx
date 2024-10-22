@@ -46,7 +46,9 @@ export default function RootLayout() {
                 <Stack.Screen name="(record)/[playerId]" options={{ headerShown: false }} />
                 <Stack.Screen name="(transactions)/[playerId]" options={{ headerShown: false }} />
                 <Stack.Screen name="(profitNLoss)/[date]" options={{ headerShown: false }} />
-                <Stack.Screen name="(pnl)/add/[date]" options={{ headerShown: false }} />
+                <Stack.Screen name="(pnl)/add/revenue/[date]" options={{ headerShown: false }} />
+                <Stack.Screen name="(pnl)/add/expense/[date]" options={{ headerShown: false }} />
+                <Stack.Screen name="(pnl)/add/x/[date]" options={{ headerShown: false }} />
                 <Stack.Screen name="(pnl)/update/[category]/[id]" options={{ headerShown: false }} />
                 <Stack.Screen name="+not-found" />
             </Stack>

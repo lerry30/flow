@@ -1,5 +1,5 @@
-CREATE DATABASE debt_tracker_db;
-USE debt_tracker_db;
+CREATE DATABASE flow_database;
+USE flow_database;
 
 CREATE TABLE info(
 	id INT PRIMARY KEY AUTO_INCREMENT, 
@@ -31,9 +31,11 @@ CREATE TABLE transactions (
     player_id INT NOT NULL,
     units INT UNSIGNED NOT NULL,
     action ENUM("IN", "OUT") NOT NULL,
-    prev_status INT NOT NULL,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    note VARCHAR(255) DEFAULT '',
     added_by INT NOT NULL,
+    deleted TINYINT(1) DEFAULT 0,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (player_id) REFERENCES players(id),
     FOREIGN KEY (added_by) REFERENCES employees(id)
 );
@@ -58,12 +60,20 @@ CREATE TABLE losses (
     FOREIGN KEY (added_by) REFERENCES employees(id)
 );
 
+CREATE TABLE xcashflow (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    amount INT NOT NULL,
+    note VARCHAR(255) NOT NULL,
+    added_by INT NOT NULL,
+    entry_date DATE NOT NULL,
+    entry_time TIME NOT NULL,
+    FOREIGN KEY (added_by) REFERENCES employees(id)
+);
+
 -- Adding indexes for optimization
 CREATE INDEX idx_info_id ON employees(info_id);
 CREATE INDEX idx_player_id ON transactions(player_id);
 
-
-
-mysqldump -u root -p debt_tracker_db > debt_tracker_db.sql
-mysql -u root -p debt_tracker_db < ~/flow-server/debt_tracker_db.sql
+-- [mysqld]
+-- default-time-zone = '+10:00'
 

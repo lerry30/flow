@@ -27,7 +27,7 @@ const limiter = rateLimit({
 
 // Use Helmet for security
 app.use(helmet());
-app.use(limiter);
+//app.use(limiter);
 // in order to use req.body
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

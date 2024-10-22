@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const storageNames = {
+    init: 'init',
     user: 'user',
     token: 'token',
 };

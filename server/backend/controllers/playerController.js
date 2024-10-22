@@ -10,20 +10,28 @@ import { requestHandler } from '../utils/requestHandler.js';
 */
 const addNewPlayer = requestHandler(async (req, res) => {
     const addedBy = req.user.employee_id;
-    const { firstname, lastname, amount } = req.body;
+    const firstname = req.body?.firstname?.trim();
+    const lastname = req.body?.lastname?.trim();
+    const amount = toNumber(req?.body?.amount);
 
-    if(!firstname || !lastname) {
-        throw {status: 400, message: 'All fields are required.'};
-    }
+    // last name is not required for privacy reason
+    if(!firstname) throw {status: 400, message: 'All fields are required.'};
 
     const pool = await connectToDB();
     const database = await pool.getConnection();
 
     await database.beginTransaction();
+    // to check if player is already existed
+    const [playerResult] = await database.execute(mysqlStatements.info, [firstname, lastname]);
+    if(playerResult?.length > 0) {
+        await database.release();
+        throw {status: 400, message: 'Player already exists.'};
+    }
+
     const [newInfoResult] = await database.execute(mysqlStatements.newInfo, [firstname, lastname]);
     const infoId = newInfoResult?.insertId;
 
-    if(infoId) {
+    if(infoId > 0) {
         const nAmount = toNumber(amount);
         const [newPlayerResult] = await database.execute(mysqlStatements.newPlayer, [infoId, nAmount, addedBy]);
         const playerId = newPlayerResult?.insertId;
@@ -31,9 +39,10 @@ const addNewPlayer = requestHandler(async (req, res) => {
         if(playerId > 0) {
             const inOut = nAmount < 0 ? 'IN' : 'OUT';
             const [newTransactionResult] = await database.execute(mysqlStatements.newTransaction, 
-                [playerId, Math.abs(nAmount, 0), inOut, 0, addedBy]);
+                [playerId, Math.abs(nAmount, 0), '', inOut, addedBy]);
             if(newTransactionResult?.insertId > 0) {
                 await database.commit();
+                await database.release();
 
                 res.status(201).json({
                     id: playerId,
@@ -42,7 +51,6 @@ const addNewPlayer = requestHandler(async (req, res) => {
                     amount: nAmount
                 });
                 
-                await database.release();
                 return;
             }
         }
@@ -59,9 +67,11 @@ const addNewPlayer = requestHandler(async (req, res) => {
    access   private
 */
 const getPlayers = requestHandler(async (req, res) => {
-    const database = await connectToDB();
+    const pool = await connectToDB();
+    const database = await pool.getConnection();
     const [players] = await database.query(mysqlStatements.players);
 
+    await database.release();
     if(!players) {
         throw {status: 400, message: 'There\'s something wrong.'};
     }
@@ -81,8 +91,11 @@ const getPlayer = requestHandler(async (req, res) => {
         throw {status: 400, message: 'Unable to get player.'};
     }
 
-    const database = await connectToDB();
+    const pool = await connectToDB();
+    const database = await pool.getConnection();
     const [result] = await database.execute(mysqlStatements.player, [playerId]);
+
+    await database.release();
 
     if(!result || result.length === 0) {
         throw {status: 400, message: 'Player not found'};
@@ -98,14 +111,17 @@ const getPlayer = requestHandler(async (req, res) => {
    access   private
 */
 const search = requestHandler(async (req, res) => {
-    const { search } = req.body;
+    const search = req.body?.search?.trim();
 
     if(!search) {
         throw {status: 400, message: 'Unable to search for players.'};
     }
 
-    const database = await connectToDB();
+    const pool = await connectToDB();
+    const database = await pool.getConnection();
     const [players] = await database.execute(mysqlStatements.search, [`%${search}%`, `%${search}%`]);
+
+    await database.release();
 
     if(!players) {
         throw {status: 400, message: 'Player not found'};

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter, Link } from 'expo-router';
 import { authUser } from '@/utils/auth';
 import { urls } from '@/constants/urls';
-import { saveToLocal } from '@/utils/localStorage';
+//import { saveToLocal } from '@/utils/localStorage';
 import { zUser } from '@/store/user';
 
 import FormField from '@/components/FormField';
@@ -35,7 +35,7 @@ const SignUp = () => {
                 }
 
                 if(!nUser?.id || !nUser?.username) throw new Error('User Credentials Undefined');
-                await saveToLocal('user', nUser);
+                //await saveToLocal('user', nUser);
                 saveUser(nUser);
 
                 setUserData({ firstname: '', lastname: '', username: '', password: '' });

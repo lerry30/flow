@@ -10,14 +10,17 @@ import { requestHandler } from '../utils/requestHandler.js';
    access   public
 */
 const authUser = requestHandler(async (req, res) => {
-    const { username, password } = req.body;
+    const username = req.body?.username?.trim();
+    const password = req.body?.password?.trim();
 
     if(!username || !password) {
         throw {status: 400, message: 'All fields are required.'};
     }
 
-    const database = await connectToDB();
+    const pool = await connectToDB();
+    const database = await pool.getConnection();
     const [user] = await database.execute(mysqlStatements.employeeWithPassword, [username]);
+    await database.release();
 
     if(user.length > 0) {
         const {employee_id, firstname, lastname, username, password: hashedPassword} = user[0];
@@ -76,6 +79,7 @@ const registerUser = requestHandler(async (req, res) => {
             const token = generateToken(value);
 
             await database.commit();
+            await database.release();
             res.status(201).json({
                 id: employeeId,
                 token: token,
@@ -84,7 +88,6 @@ const registerUser = requestHandler(async (req, res) => {
                 username: username,
             });
 
-            await database.release();
             return;
         }
     }

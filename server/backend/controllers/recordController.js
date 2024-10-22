@@ -10,7 +10,10 @@ import { requestHandler } from '../utils/requestHandler.js';
 */
 const addRecord = requestHandler(async (req, res) => {
     const addedBy = req.user.employee_id;
-    const { playerId, action, amount } = req.body;
+    const playerId = req.body?.playerId;
+    const action = req.body?.action;
+    const amount = toNumber(req.body?.amount);
+    const note = req.body?.note?.trim();
 
     if(!playerId || Object.keys(action).length === 0 || !amount) {
         throw {status: 400, message: 'There\’s something wrong. Unable to record the payment or load, possibly due to zero value. Please try again.'};
@@ -39,8 +42,9 @@ const addRecord = requestHandler(async (req, res) => {
         newBalance = balance - nAmount;
     }
 
+    // status = balance in players table
     const [balanceUpdateResult] = await database.execute(mysqlStatements.updateBalance, [newBalance, playerId]);
-    const [newTransactionResult] = await database.execute(mysqlStatements.newTransaction, [playerId, nAmount, dbAction, balance, addedBy]);
+    const [newTransactionResult] = await database.execute(mysqlStatements.newTransaction, [playerId, nAmount, note, dbAction, addedBy]);
     if(balanceUpdateResult.changedRows === 0 || newTransactionResult.insertId === 0) {
         await database.rollback();
         await database.release();

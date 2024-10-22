@@ -3,6 +3,7 @@ import { sendJSON } from '@/utils/send';
 export const authUserInput = (userData, setError, exclusion=[]) => {
     let stop = false;
     for(const field in userData) {
+        userData[field] = userData[field]?.trim();
         if(!exclusion.includes(field)) {
             if(!userData[field]) {
                 let nField = field === 'firstname' || field === 'lastname' ? field.replace('name', ' name') : field;

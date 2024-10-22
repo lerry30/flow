@@ -10,23 +10,22 @@ import { urls } from '@/constants/urls';
 import { formattedNumber } from '@/utils/number';
 import { formattedDateAndTime } from '@/utils/datetime';
 
-import AppLogo from '@/components/AppLogo';
 import Search from '@/components/Search';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import Header from '@/components/Header';
 
-const Home = () => {
+const Players = () => {
     const [players, setPlayers] = useState([]);
     const [actions, setActions] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    const username = zUser(state => state?.username);
     const router = useRouter();
     const intervalId = useRef(undefined);
-    const RELOADTIME = 5000;
+    const RELOADTIME = 10000; // should not be lower to 9 seconds
 
     const displayActions = (index) => {
-        setActions(state => state.map((_, i) => i===index));
+        setActions(state => state.map((value, i) => i===index && !value));
     }
 
     const setPlayersData = (data) => {
@@ -63,12 +62,13 @@ const Home = () => {
             setLoading(false);
         } catch(error) {
             console.log(error?.message);
+            router.push('(user)/login');
         }
     }
 
     useFocusEffect(
         useCallback(() => {
-            if(!username) {
+            if(!zUser.getState()?.username) {
                 router.push('(user)/login');
             } else {
                 setLoading(true);
@@ -119,9 +119,7 @@ const Home = () => {
     return (
         <SafeAreaView className="flex-1">
             <View className="flex-1 w-full min-h-screen px-4 bg-white">
-                <View className="w-[90px]">
-                    <AppLogo style={{width: 'fit-content'}}/>
-                </View>
+                <Header />
                 <Text className="font-pbold text-lg py-2">Players</Text>
                 <Search 
                     callback={(result) => {
@@ -155,4 +153,4 @@ const Home = () => {
     );
 }
 
-export default Home;
+export default Players;

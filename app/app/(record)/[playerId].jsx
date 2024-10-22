@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useState, useRef } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { sendJSON } from '@/utils/send';
 import { urls } from '@/constants/urls';
@@ -18,6 +18,7 @@ import CustomAlert from '@/components/CustomAlert';
 const Record = () => {
     const [player, setPlayer] = useState({name: '', status: 0, addedBy: '', createdAt: ''});
     const [amount, setAmount] = useState(0);
+    const [note, setNote] = useState('');
     const [action, setAction] = useState({plus: false, minus: true});
     const [loading, setLoading] = useState(false);
     const [playerAlert, setPlayerAlert] = useState(false);
@@ -26,16 +27,22 @@ const Record = () => {
     const playerId = useLocalSearchParams()?.playerId;
     const router = useRouter();
 
+    const isClicked = useRef(false);
+
     const inputData = async () => {
         try {
+            if(isClicked.current) return;
             setLoading(true);
             const nAmount = toNumber(amount);
+            const nNote = note?.trim();
             if(nAmount === 0) {
                 setAmountAlert(true);
                 return;
             }
 
-            const response = await sendJSON(urls['borrowpay'], {playerId, action, amount: nAmount}, 'PUT');
+            isClicked.current = true;
+            const response = await sendJSON(urls['borrowpay'], 
+                {playerId, action, amount: nAmount, note: nNote}, 'PUT');
             if(response) {
                 setAmount(0);
                 router.push('(tabs)/players');
@@ -43,6 +50,7 @@ const Record = () => {
         } catch(error) {
             setAmountAlert(true);
             console.log(error?.message);
+            isClicked.current = false;
         } finally {
             setLoading(false);
         }
@@ -69,7 +77,10 @@ const Record = () => {
     }
 
     useLayoutEffect(() => {
-        getPlayer();    
+        getPlayer();
+        return () => {
+            isClicked.current = false;
+        }
     }, [])
 
     if(loading) {
@@ -88,14 +99,14 @@ const Record = () => {
                         <AppLogo style={{width: 'fit-content'}}/>
                     </View>
 
-                    <Text className="font-pbold text-lg py-2">Stats</Text>
+                    <Text className="font-pbold text-lg">Stats</Text>
                     <View className="w-full flex flex-col justify-center">
                         <Text className="text-xl text-primary">{player?.name}</Text>
                         <Text className="text-primary/80 italic">Added by: {player?.addedBy}</Text>
                         <Text className="text-primary">{player?.createdAt}</Text>
                         <View className="w-full bg-lightshade rounded-xl px-4 pt-4 pb-2 my-4">
                             <Text className="font-psemibold text-primary">Player Stats:</Text>
-                            <Text className="font-psemibold text-[40px] text-primary leading-none">{formattedNumber(player?.status)}</Text>
+                            <Text className="font-psemibold text-[34px] text-primary leading-none">{formattedNumber(player?.status)}</Text>
                         </View>
                     </View>
 
@@ -105,20 +116,20 @@ const Record = () => {
                             onPress={() => {
                                 setAction({minus: true, plus: false});
                             }}
-                            className="w-[48%] aspect-square flex justify-center items-center bg-lightshade rounded-xl mr-[4%]"
+                            className="w-[48%] h-[60px] flex justify-center items-center bg-lightshade rounded-xl mr-[4%]"
                             style={{backgroundColor: action.minus ? '#dc3f1cbb' : '#dcdcdc'}}
                         >
-                            <Feather name="minus" size={40} color={action.minus ? 'white' : '#2e2e2e'} />
+                            <Feather name="minus" size={30} color={action.minus ? 'white' : '#2e2e2e'} />
                         </TouchableOpacity>
                         <TouchableOpacity
                             activeOpacity={1} 
                             onPress={() => {
                                 setAction({minus: false, plus: true});
                             }}
-                            className="w-[48%] aspect-square flex justify-center items-center bg-lightshade rounded-xl"
+                            className="w-[48%] h-[60px] flex justify-center items-center bg-lightshade rounded-xl"
                             style={{backgroundColor: action.plus ? '#dc3f1cbb' : '#dcdcdc'}}
                         >
-                            <AntDesign name="plus" size={40} color={action.plus ? 'white' : '#2e2e2e'} />
+                            <AntDesign name="plus" size={30} color={action.plus ? 'white' : '#2e2e2e'} />
                         </TouchableOpacity>
                     </View>
                     <FormField
@@ -131,6 +142,13 @@ const Record = () => {
                         }}
                         keyboardType="numeric"
                         contClassName="mt-4"
+                    />
+                    <FormField
+                        title="Note"
+                        value={note}
+                        placeholder="Note"
+                        onChange={value => setNote(value)}
+                        contClassName="my-4"
                     />
                     <CustomButton title="Input Data" onPress={inputData} contClassName="w-full mt-4" />
                 </View>

@@ -1,13 +1,15 @@
 import { View, Text, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useState, useCallback, useRef } from 'react';
 import { toNumber } from '@/utils/number';
 import { sendJSON } from '@/utils/send';
 import { urls } from '@/constants/urls';
 import { useRouter } from 'expo-router';
+import { zUser } from '@/store/user';
 
-import AppLogo from '@/components/AppLogo';
+import Header from '@/components/Header';
 import FormField from '@/components/FormField';
 import ErrorField from '@/components/ErrorField';
 import CustomButton from '@/components/CustomButton';
@@ -15,33 +17,31 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 
 const Create = () => {
     const [playerData, setPlayerData] = useState({firstname: '', lastname: ''});
-    const [error, setError] = useState({firstname: '', lastname: ''});
+    const [error, setError] = useState({firstname: '', lastname: '', default: ''});
     const [amount, setAmount] = useState(0);
     const [loading, setLoading] = useState(false);
 
     const router = useRouter();
+    const isClicked = useRef(false);
     
     const newPlayer = async () => {
         try {
+            if(isClicked.current) return;
             setLoading(true);
-            let br = false;
+            playerData.firstname = playerData?.firstname?.trim();
+            playerData.lastname = playerData?.lastname?.trim();
             if(!playerData?.firstname) {
                 setError(data => ({...data, firstname: 'First name is empty.'}));
-                br = true;
+                throw new Error('Error: Input fields are required.');
             }
-
-            if(!playerData?.lastname) {
-                setError(data => ({...data, lastname: 'Last name is empty.'}));
-                br = true;
-            }
-
-            if(br) throw new Error('Error: Input fields are required.');
 
             const data = {
-                firstname: playerData.firstname, 
+                firstname: playerData.firstname,
                 lastname: playerData.lastname, 
-                amount: amount,
+                amount: toNumber(amount),
             };
+
+            isClicked.current = true;
             const result = await sendJSON(urls['newplayer'], data);
             if(result) {
                 setPlayerData({firstname: '', lastname: ''});
@@ -50,10 +50,21 @@ const Create = () => {
             }
         } catch(error) {
             console.log(error?.message);
+            setError(state => ({...state, default: error?.message}));
+            isClicked.current = false;
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
     }
+
+    useFocusEffect(
+        useCallback(() => {
+            if(!zUser.getState()?.username) router.push('(user)/login');
+            return () => {
+                isClicked.current = false;
+            }
+        }, [])
+    );
     
     if(loading) {
         return (
@@ -67,9 +78,7 @@ const Create = () => {
         <SafeAreaView>
             <ScrollView>
                 <View className="flex-1 w-full min-h-screen flex flex-col px-4 bg-white">
-                    <View className="w-[90px]">
-                        <AppLogo style={{width: 'fit-content'}}/>
-                    </View>
+                    <Header />
                     <Text className="font-pbold text-lg py-2">Add New Player</Text>
                     <FormField
                         title="First Name"
@@ -106,6 +115,7 @@ const Create = () => {
                     </View>
 
                     <CustomButton title="Add New Player" onPress={newPlayer} contClassName="w-full mt-8" />
+                    <ErrorField error={error?.default || ''} />
                 </View>
             </ScrollView>
             <StatusBar style="dark" />

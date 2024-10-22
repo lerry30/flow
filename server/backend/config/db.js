@@ -23,7 +23,8 @@ const connectToDB = async () => {
                 waitForConnections: true,
                 connectionLimit: 10,  // Adjust this according to your needs
                 queueLimit: 0,
-                multipleStatements: true,
+                timezone: 'Z',
+                dateStrings: true,
             });
 
             logConnectionStatus({

@@ -6,10 +6,12 @@ import { useFocusEffect } from '@react-navigation/native';
 import { sendJSON } from '@/utils/send';
 import { urls } from '@/constants/urls';
 import { toNumber, formattedNumber } from '@/utils/number';
-import { formattedDateAndTime } from '@/utils/datetime';
+import { formattedDateAndTime, toTimeZoneDate, formattedDateAus } from '@/utils/datetime';
+import { zUser } from '@/store/user';
+import { useRouter } from 'expo-router';
 
 //import FlowStatsChart from '@/components/FlowStatsChart';
-import AppLogo from '@/components/AppLogo';
+import Header from '@/components/Header';
 
 const Summary = () => {
     const [displayGraph, setDisplayGraph] = useState(false);
@@ -23,7 +25,10 @@ const Summary = () => {
     const [loading, setLoading] = useState(false);
 
     const [overallNet, setOverallNet] = useState(0);
-    const [netToday, setNetToday] = useState(0);
+    const [lastNet, setLastNet] = useState(0);
+    const [lastNetDate, setLastNetDate] = useState('');
+
+    const router = useRouter();
 
     const lastUpdate = useRef(null);
     const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
@@ -33,7 +38,7 @@ const Summary = () => {
             const response = await sendJSON(urls['history'], {});
             if(response) {
                 const { transactions } = response;
-                const now = new Date();
+                const now = toTimeZoneDate(new Date());
 
                 lastUpdate.current = transactions.length > 0 ? transactions[0].timestamp: undefined;
                 let allIns = 0;
@@ -43,19 +48,20 @@ const Summary = () => {
 
                 //setDisplayGraph(transactions.length > 0);
                 for(const transaction of transactions) {
-                    const {units, action, prev_status, timestamp} = transaction;
+                    const {units, action, deleted, timestamp} = transaction;
                     const nUnits = toNumber(units);
+                    const isDeleted = !!deleted;
                     const transactionDate = new Date(timestamp);
 
-                    if(action === 'OUT') allOuts += nUnits;
-                    if(action === 'IN') allIns += nUnits;
+                    if(action === 'OUT' && !isDeleted) allOuts += nUnits;
+                    if(action === 'IN' && !isDeleted) allIns += nUnits;
                     if(now.getFullYear() === transactionDate.getFullYear()) {
                         const monthKey = months[transactionDate.getMonth()];
-                        if(action === 'OUT') {
+                        if(action === 'OUT' && !isDeleted) {
                             outsMonthCollections[monthKey] += nUnits
                         }
 
-                        if(action === 'IN') {
+                        if(action === 'IN' && !isDeleted) {
                             insMonthCollections[monthKey] += nUnits
                         }
                     }
@@ -66,7 +72,7 @@ const Summary = () => {
 
                 setOverAllOuts(allOuts);
                 setOverAllIns(allIns);
-                setNet((allOuts*-1)+allIns);
+                setNet(allOuts+(allIns*-1));
             }
         } catch(error) {
             console.log(error?.message);
@@ -89,12 +95,13 @@ const Summary = () => {
         }
     }
 
-    const getNetForTheDay = async () => {
+    const getLastNet = async () => {
         try {
             setLoading(true);
-            const response = await sendJSON(urls['nettoday'], {}, 'POST');
+            const response = await sendJSON(urls['lastnet'], {}, 'POST');
             if(response) {
-                setNetToday(response?.today); 
+                setLastNet(response?.last);
+                setLastNetDate(formattedDateAus(new Date(response?.date)));
             }
         } catch(error) {
             console.log(error?.message);
@@ -105,9 +112,10 @@ const Summary = () => {
 
     useFocusEffect(
         useCallback(() => {
+            if(!zUser.getState()?.username) router.push('(user)/login');
             getTransactions();
             getOverallNet();
-            getNetForTheDay();
+            getLastNet();
         }, [])
     );
 
@@ -123,9 +131,7 @@ const Summary = () => {
         <SafeAreaView>
             <ScrollView>
                 <View className="flex-1 w-full min-h-screen px-4 bg-white">
-                    <View className="w-[90px]">
-                        <AppLogo style={{width: 'fit-content'}}/>
-                    </View>
+                    <Header />
                     <Text className="font-pbold text-lg py-2">Summary</Text>
                     {/*{ displayGraph && (
                         <View>
@@ -144,11 +150,11 @@ const Summary = () => {
                     )}*/}
                     <View className="w-full space-y-2 mt-2 mb-10">
                         <View className="flex flex-row justify-between">
-                            <Text className="font-psemibold text-primary">Net for the Day:</Text>
-                            <Text className="font-psemibold text-primary text-xl">{netToday<0?`-$${formattedNumber(Math.abs(netToday))}`:`$${formattedNumber(netToday)}`}</Text>
+                            <Text className="font-psemibold text-primary text-lg w-1/2 shrink">Net of Last Game ({`${lastNetDate}`}):</Text>
+                            <Text className="font-psemibold text-primary text-xl">{lastNet<0?`-$${formattedNumber(Math.abs(lastNet))}`:`$${formattedNumber(lastNet)}`}</Text>
                         </View>
                         <View className="flex flex-row justify-between">
-                            <Text className="font-psemibold text-primary">Overall Net:</Text>
+                            <Text className="font-psemibold text-primary text-lg">Overall Net:</Text>
                             <Text className="font-psemibold text-primary text-xl">{overallNet<0?`-$${formattedNumber(Math.abs(overallNet))}`:`$${formattedNumber(overallNet)}`}</Text>
                         </View>
                     </View>
@@ -158,14 +164,14 @@ const Summary = () => {
                             <Text className="font-psemibold text-primary/80">{formattedDateAndTime(new Date(lastUpdate.current))}</Text>
                         </View>
                         <View className="flex flex-row justify-between">
-                            <Text className="font-psemibold text-primary">Total Out:</Text>
-                            <Text className="font-psemibold text-primary text-xl">-{formattedNumber(overAllOuts)}</Text>
+                            <Text className="font-psemibold text-primary text-lg">Total Out:</Text>
+                            <Text className="font-psemibold text-primary text-xl">-{formattedNumber(overAllIns)}</Text>
                         </View>
                         <View className="flex flex-row justify-between border-b-2 border-primary">
-                            <Text className="font-psemibold text-primary">Total In:</Text>
-                            <Text className="font-psemibold text-primary text-xl">+{formattedNumber(overAllIns)}</Text>
+                            <Text className="font-psemibold text-primary text-lg">Total In:</Text>
+                            <Text className="font-psemibold text-primary text-xl">+{formattedNumber(overAllOuts)}</Text>
                         </View>
-                        <View className="flex flex-row justify-between pt-1" style={{backgroundColor: `${net<0?'#dc3f1caa':'#fff'}`}}>
+                        <View className="flex flex-row justify-between pt-1" style={{backgroundColor: `${net<0?'#dc3f1c77':'#fff'}`}}>
                             <Text className="font-psemibold text-primary text-lg">Net Statistics</Text>
                             <Text className="font-psemibold text-primary text-2xl">{formattedNumber(net)}</Text>
                         </View>
