@@ -9,6 +9,7 @@ import { sendJSON } from '@/utils/send';
 import { urls } from '@/constants/urls';
 import { formattedNumber } from '@/utils/number';
 import { formattedDateAndTime } from '@/utils/datetime';
+import { appInactivityLogout } from '@/utils/loggedOut';
 
 import Search from '@/components/Search';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
@@ -107,6 +108,8 @@ const Players = () => {
             </TouchableOpacity>
         );
     }
+
+    appInactivityLogout();
 
     if(loading) {
         return (

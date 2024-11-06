@@ -1,5 +1,6 @@
-import connectToDB from '../config/db.js';
-import * as mysqlStatements from '../mysql/statements.js';
+import * as playerStmt from '../mysql/player.js';
+import * as transactionStmt from '../mysql/transaction.js';
+import * as transactionHistoryStmt from '../mysql/transactionHistory.js';
 import { requestHandler } from '../utils/requestHandler.js';
 
 /*
@@ -7,18 +8,12 @@ import { requestHandler } from '../utils/requestHandler.js';
    route    POST /api/transactions/player
    access   private
 */
-const getPlayerTransactionHistory = requestHandler(async (req, res) => {
+const getPlayerTransactionHistory = requestHandler(async (req, res, database) => {
     const { playerId } = req.body;
 
-    if(!playerId) {
-        throw {status: 400, message: 'Player not found.'};
-    }
+    if(!playerId) throw {status: 400, message: 'Player not found.'};
 
-    const pool = await connectToDB();
-    const database = await pool.getConnection();
-    const [transactions] = await database.execute(mysqlStatements.playerTransactions, [playerId]);
-    await database.release();
-
+    const [transactions] = await database.execute(transactionStmt.playerTransactions, [playerId]);
     if(transactions) {
         res.status(200).json({transactions});
     } else {
@@ -31,12 +26,8 @@ const getPlayerTransactionHistory = requestHandler(async (req, res) => {
    route    POST /api/transactions/
    access   private
 */
-const getTransactionHistory = requestHandler(async (req, res) => {
-    const pool = await connectToDB();
-    const database = await pool.getConnection();
-    const [transactions] = await database.query(mysqlStatements.transactions);
-    await database.release();
-
+const getTransactionHistory = requestHandler(async (req, res, database) => {
+    const [transactions] = await database.query(transactionStmt.transactions);
     if(transactions) {
         res.status(200).json({transactions});
     } else {
@@ -49,25 +40,32 @@ const getTransactionHistory = requestHandler(async (req, res) => {
    route    DELETE /api/transactions/
    access   private
 */
-const deleteTransactionHistory = requestHandler(async (req, res) => {
+const deleteTransactionHistory = requestHandler(async (req, res, database) => {
+    const userLevel = req.user?.level;
+    const deletedBy = req.user?.employee_id;
     const deleteTransactionId = req.body?.deleteTransactionId;
     const playerId = req.body?.playerId;
 
-    const pool = await connectToDB();
-    const database = await pool.getConnection();
-    await database.beginTransaction();
-    const [transactions] = await database.execute(mysqlStatements.playerTransactions, [playerId]);
+    if(userLevel !== 'II' && userLevel !== 'III') throw {status: 401, message: 'Deleting a transaction requires a user privilege level of 2 or 3.'};
 
+    // query transactions to total balance
+    const [transactions] = await database.execute(transactionStmt.playerTransactions, [playerId]);
     if(!transactions || transactions.length === 0) {
-        await database.release();
-        await database.rollback();
         throw {status: 400, message: 'Player not found'};
     }
 
+    // will total the new balance
     let newBalance = 0;
     for(const transac of transactions) {
-        const {transaction_id, units, action, deleted} = transac; 
-        if(transaction_id !== deleteTransactionId && deleted === 0) {
+        const {transactionId, units, action, history} = transac;
+        let isDeleted = false;
+        //const {historyId, modifiedByEmployee, action, modifiedAt} = history[0];
+        const historyInObject = JSON.parse(history || '[]'); // history was in string
+        for(const state of historyInObject) {
+            if(state?.action === 'DELETED') isDeleted = true;
+        }
+
+        if(transactionId !== deleteTransactionId && !isDeleted) {
             if(action === 'IN') {
                 newBalance -= units;
             } else if(action === 'OUT') {
@@ -76,19 +74,18 @@ const deleteTransactionHistory = requestHandler(async (req, res) => {
         }
     }
 
-    const [deleteStatus] = await database.execute(mysqlStatements.updateTransactionState, [1, deleteTransactionId]);
-    const [balanceUpdateResult] = await database.execute(mysqlStatements.updateBalance, [newBalance, playerId]);
+    const [newTransactionHistoryResult] = await database.execute(transactionHistoryStmt.newTransactionHistory, 
+        [deleteTransactionId, 0, 'IN', '', deletedBy, 'DELETED']);
+    const [balanceUpdateResult] = await database.execute(playerStmt.updateBalance, [newBalance, playerId]); // update player balance
 
-    if(deleteStatus?.changedRows > 0 && balanceUpdateResult?.changedRows > 0) {
-        await database.commit();
-        await database.release();
+    // console.log(deleteStatus?.changedRows, balanceUpdateResult?.changedRows); // if the amount of units in transaction is zero the deletion of it will not update the user's balance so the output of balanceUpdateResult?.changedRows will be zero or not update happened
+    if(newTransactionHistoryResult?.insertId > 0 && balanceUpdateResult?.changedRows > 0) {
         res.status(200).json({message: 'Deleted successfully.'});
     } else {
-        await database.rollback();
-        await database.release();
         throw {status: 400, message: 'No transaction history yet.'};
     }
 });
+
 export { 
     getPlayerTransactionHistory,
     getTransactionHistory,

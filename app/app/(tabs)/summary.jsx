@@ -6,7 +6,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { sendJSON } from '@/utils/send';
 import { urls } from '@/constants/urls';
 import { toNumber, formattedNumber } from '@/utils/number';
-import { formattedDateAndTime, toTimeZoneDate, formattedDateAus } from '@/utils/datetime';
+import { formattedDateAndTime, formattedDateAus } from '@/utils/datetime';
 import { zUser } from '@/store/user';
 import { useRouter } from 'expo-router';
 
@@ -38,7 +38,7 @@ const Summary = () => {
             const response = await sendJSON(urls['history'], {});
             if(response) {
                 const { transactions } = response;
-                const now = toTimeZoneDate(new Date());
+                const now = new Date();
 
                 lastUpdate.current = transactions.length > 0 ? transactions[0].timestamp: undefined;
                 let allIns = 0;
@@ -48,10 +48,15 @@ const Summary = () => {
 
                 //setDisplayGraph(transactions.length > 0);
                 for(const transaction of transactions) {
-                    const {units, action, deleted, timestamp} = transaction;
+                    const {units, action, history, createdAt} = transaction;
                     const nUnits = toNumber(units);
-                    const isDeleted = !!deleted;
-                    const transactionDate = new Date(timestamp);
+                    const transactionDate = new Date(createdAt);
+                    let isDeleted = false;
+
+                    const historyInObject = JSON.parse(history || '[]'); // history was in string
+                    for(const state of historyInObject) {
+                        if(state?.action === 'DELETED') isDeleted = true;
+                    }
 
                     if(action === 'OUT' && !isDeleted) allOuts += nUnits;
                     if(action === 'IN' && !isDeleted) allIns += nUnits;
@@ -150,7 +155,7 @@ const Summary = () => {
                     )}*/}
                     <View className="w-full space-y-2 mt-2 mb-10">
                         <View className="flex flex-row justify-between">
-                            <Text className="font-psemibold text-primary text-lg w-1/2 shrink">Net of Last Game ({`${lastNetDate}`}):</Text>
+                            <Text className="font-psemibold text-primary text-lg w-1/2 shrink">Net of Last Game {lastNetDate !== 'Invalid Date' ? `(${lastNetDate})` : ''}:</Text>
                             <Text className="font-psemibold text-primary text-xl">{lastNet<0?`-$${formattedNumber(Math.abs(lastNet))}`:`$${formattedNumber(lastNet)}`}</Text>
                         </View>
                         <View className="flex flex-row justify-between">

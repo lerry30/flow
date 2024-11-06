@@ -1,5 +1,5 @@
-//export const serverDomain = 'https://flowserver.lerry.site';
-export const serverDomain = 'http://192.168.0.104:3000';
+export const serverDomain = 'https://flowserver.lerry.site';
+//export const serverDomain = 'http://192.168.0.104:3000';
 
 export const urls = {
     signup: `${serverDomain}/api/users`,
@@ -22,4 +22,5 @@ export const urls = {
     monthoperations: `${serverDomain}/api/pnl/monthoperations`,
     overall: `${serverDomain}/api/pnl/overall`,
     lastnet: `${serverDomain}/api/pnl/lastnet`,
+    getpnlhistory: `${serverDomain}/api/pnl/history`,
 }

@@ -7,12 +7,15 @@ import { formattedDateAus, formatTimeFromString } from '@/utils/datetime';
 import { sendJSON } from '@/utils/send';
 import { urls } from '@/constants/urls';
 import { toNumber, formattedNumber } from '@/utils/number';
+import { appInactivityLogout } from '@/utils/loggedOut';
 
 import AppLogo from '@/components/AppLogo';
 import CustomButton from '@/components/CustomButton';
 import CustomModal from '@/components/CustomModal';
+import CustomAlert from '@/components/CustomAlert';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 const ProfitNLoss = () => {
     const [data, setData] = useState({profits: [], losses: [], xcashflow: []});
@@ -25,6 +28,7 @@ const ProfitNLoss = () => {
     const [totalNet, setTotalNet] = useState(0);
     const [loading, setLoading] = useState(false);
     const [deleteData, setDeleteData] = useState({status: false, id: 0, category: ''});
+    const [deleteAlert, setDeleteAlert] = useState(false);
 
     const router = useRouter();
     const date = useLocalSearchParams()?.date;
@@ -44,6 +48,7 @@ const ProfitNLoss = () => {
             }
         } catch(error) {
             console.log(error?.message);
+            setDeleteAlert(true);
         } finally {
             setLoading(false);
             setDeleteData({status: false, id: 0, category: ''});
@@ -54,6 +59,7 @@ const ProfitNLoss = () => {
         try {
             setLoading(true);
             const response = await sendJSON(urls['getpnl'], {date}, 'POST');
+            console.log(response);
             if(response) {
                 const revenues = response?.revenues || [];
                 const expenses = response?.expenses || [];
@@ -136,6 +142,8 @@ const ProfitNLoss = () => {
         }, [])
     );
 
+    appInactivityLogout();
+
     if(loading) {
         return (
             <SafeAreaView className="flex-1 flex justify-center items-center">
@@ -194,11 +202,16 @@ const ProfitNLoss = () => {
                                                 return [...state];
                                             });
                                         }} className="relative" style={{marginBottom: isSelected ? 50 : 8}}>
-                                            <View className="w-[120px] h-[50px] flex flex-row justify-between items-end px-4 py-2 rounded-b-xl bg-lightshade" style={{position: 'absolute', right: 0, bottom: isSelected ? -40 : 0}}>
+                                            <View className="w-[170px] h-[50px] flex flex-row justify-between items-end px-4 py-2 rounded-b-xl bg-lightshade" style={{position: 'absolute', right: 0, bottom: isSelected ? -40 : 0}}>
                                                 <TouchableOpacity activeOpacity={0.9} onPress={() => 
                                                     setDeleteData({status: true, id: xCF?.id, category: 'X Cash Flow'})
                                                 }>
                                                     <Ionicons name="trash-bin" size={26} color="2e2e2e" />
+                                                </TouchableOpacity>
+                                                <TouchableOpacity activeOpacity={0.9} onPress={()=>{
+                                                    router.push(`(pnl)/history/xcashflow/${date}/${xCF?.id}`)
+                                                }}>
+                                                    <FontAwesome5 name="scroll" size={22} color="#2e2e2e" />
                                                 </TouchableOpacity>
                                                 <TouchableOpacity activeOpacity={0.9} onPress={() => {
                                                     router.push(`(pnl)/update/xcashflow/${xCF?.id}`);
@@ -237,12 +250,17 @@ const ProfitNLoss = () => {
                                                 return [...state];
                                             });
                                         }} className="relative" style={{marginBottom: isSelected ? 50 : 8}}>
-                                            <View className="w-[120px] h-[50px] flex flex-row justify-between items-end px-4 py-2 rounded-b-xl bg-lightshade" style={{position: 'absolute', right: 0, bottom: isSelected ? -40 : 0}}>
+                                            <View className="w-[170px] h-[50px] flex flex-row justify-between items-end px-4 py-2 rounded-b-xl bg-lightshade" style={{position: 'absolute', right: 0, bottom: isSelected ? -40 : 0}}>
 
                                                 <TouchableOpacity activeOpacity={0.9} onPress={() => 
                                                     setDeleteData({status: true, id: profit?.id, category: 'revenue'})
                                                 }>
                                                     <Ionicons name="trash-bin" size={26} color="2e2e2e" />
+                                                </TouchableOpacity>
+                                                <TouchableOpacity activeOpacity={0.9} onPress={()=>{
+                                                    router.push(`(pnl)/history/revenue/${date}/${profit?.id}`)
+                                                }}>
+                                                    <FontAwesome5 name="scroll" size={22} color="#2e2e2e" />
                                                 </TouchableOpacity>
                                                 <TouchableOpacity activeOpacity={0.9} onPress={() => {
                                                     router.push(`(pnl)/update/revenue/${profit?.id}`);
@@ -281,13 +299,19 @@ const ProfitNLoss = () => {
                                                 return [...state];
                                             });
                                         }} className="relative" style={{marginBottom: isSelected ? 50 : 8}}>
-                                            <View className="w-[120px] h-[50px] flex flex-row justify-between items-end px-4 py-2 rounded-b-xl bg-lightshade" style={{position: 'absolute', right: 0, bottom: isSelected ? -40 : 0}}>
+                                            <View className="w-[170px] h-[50px] flex flex-row justify-between items-end px-4 py-2 rounded-b-xl bg-lightshade" style={{position: 'absolute', right: 0, bottom: isSelected ? -40 : 0}}>
 
                                                 <TouchableOpacity activeOpacity={0.9} onPress={() =>
                                                     setDeleteData({status: true, id: loss?.id, category: 'expense'})
                                                 }>
                                                      <Ionicons name="trash-bin" size={26} color="2e2e2e" />
                                                 </TouchableOpacity>
+                                                <TouchableOpacity activeOpacity={0.9} onPress={()=>{
+                                                    router.push(`(pnl)/history/expense/${date}/${loss?.id}`)
+                                                }}>
+                                                    <FontAwesome5 name="scroll" size={22} color="#2e2e2e" />
+                                                </TouchableOpacity>
+
                                                 <TouchableOpacity activeOpacity={0.9} onPress={() => {
                                                     router.push(`(pnl)/update/expense/${loss?.id}`);
                                                 }}>
@@ -316,6 +340,7 @@ const ProfitNLoss = () => {
                 </View> 
             </ScrollView>
             {deleteData.status && <CustomModal visible={true} onProceed={removePnL} title={`Delete ${deleteData?.category[0].toUpperCase()+deleteData?.category.substring(1)}`} onClose={()=>setDeleteData({status: false, id: 0, category: ''})} message={`Are you sure you want to remove this ${deleteData?.category}?`} />}
+            {deleteAlert && <CustomAlert visible={true} onClose={() => setDeleteAlert(false)} title="Delete Error" message="Deleting P&L requires a user privilege level of 3." />}
         </SafeAreaView>
     );
 }

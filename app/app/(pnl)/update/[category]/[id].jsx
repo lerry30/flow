@@ -6,6 +6,7 @@ import { formattedDateAus, formattedDate } from '@/utils/datetime';
 import { sendJSON } from '@/utils/send';
 import { urls } from '@/constants/urls';
 import { toNumber, formattedNumber } from '@/utils/number';
+import { appInactivityLogout } from '@/utils/loggedOut';
 
 import AppLogo from '@/components/AppLogo';
 import FormField from '@/components/FormField';
@@ -106,6 +107,8 @@ const UpdatePnL = () => {
         const fAmount = nAmount === 0 ? '0' : `${sign}${formattedNumber(nAmount)}`;
         setData(state => ({...data, amount: fAmount}));
     }, [action]);
+
+    appInactivityLogout();
 
     if(loading) {
         return (

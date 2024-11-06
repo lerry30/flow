@@ -1,7 +1,6 @@
 import { View, TouchableOpacity } from 'react-native';
-import { zUser } from '@/store/user';
 import { useRouter } from 'expo-router';
-import { removeFromLocal } from '@/utils/localStorage';
+import { logout } from '@/utils/loggedOut';
 
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import AppLogo from '@/components/AppLogo';
@@ -15,9 +14,7 @@ const Header = () => {
             </View>
             <TouchableOpacity
                 onPress={async () => {
-                    await removeFromLocal('user');
-                    await removeFromLocal('token');
-                    zUser.getState()?.removeAllData();
+                    await logout();
                     router.push('(user)/login');
                 }}
                 className="p-1 rounded-full bg-secondary">

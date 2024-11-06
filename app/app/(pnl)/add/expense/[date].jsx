@@ -6,6 +6,7 @@ import { formattedDateAus } from '@/utils/datetime';
 import { sendJSON } from '@/utils/send';
 import { urls } from '@/constants/urls';
 import { toNumber, formattedNumber } from '@/utils/number';
+import { appInactivityLogout } from '@/utils/loggedOut';
 
 import AppLogo from '@/components/AppLogo';
 import FormField from '@/components/FormField';
@@ -46,8 +47,9 @@ const AddExpense = () => {
                 if(toNumber(expense?.amount) > 0) {
                     const fieldName = openFields[i];
                     if(fieldName.trim().toLowerCase() === 'other' && !expense.note) throw new Error('Please add a note for other expense.');
-                    expense.note = expense?.note?.trim();
+                    expense.note = expense?.note?.trim() || '';
                     const note = `${fieldName}${expense?.note && `: ${expense?.note}`}`;
+                    console.log(note);
                     nData.expenses.push({amount: expense.amount, note});
                 }
             }
@@ -73,6 +75,8 @@ const AddExpense = () => {
         setOpenFields(state => [...state, value]);
         setItems(state => state.filter(item => item?.value !== value));
     }
+
+    appInactivityLogout();
 
     if(loading) {
         return (

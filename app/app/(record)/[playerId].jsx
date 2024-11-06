@@ -7,6 +7,7 @@ import { sendJSON } from '@/utils/send';
 import { urls } from '@/constants/urls';
 import { formattedDateAndTime } from '@/utils/datetime';
 import { toNumber, formattedNumber } from '@/utils/number';
+import { appInactivityLogout } from '@/utils/loggedOut';
 
 import AppLogo from '@/components/AppLogo';
 import FormField from '@/components/FormField';
@@ -81,7 +82,9 @@ const Record = () => {
         return () => {
             isClicked.current = false;
         }
-    }, [])
+    }, []);
+
+    appInactivityLogout();
 
     if(loading) {
         return (

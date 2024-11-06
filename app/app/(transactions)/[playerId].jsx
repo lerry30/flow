@@ -7,6 +7,7 @@ import { sendJSON } from '@/utils/send';
 import { urls } from '@/constants/urls';
 import { formattedDateAndTime, areDatesEqual } from '@/utils/datetime';
 import { formattedNumber, shrinkLargeNumber } from '@/utils/number';
+import { appInactivityLogout } from '@/utils/loggedOut';
 
 import CustomAlert from '@/components/CustomAlert';
 import CustomModal from '@/components/CustomModal';
@@ -18,7 +19,9 @@ const Transactions = () => {
     const [transactions, setTransactions] = useState([]);
     const [eachTransaction, setEachTransaction] = useState([]);
     const [eachPrevTransaction, setEachPrevTransaction] = useState([]);
+    const [deletedTransactions, setDeletedTransactions] = useState({});
     const [playerAlert, setPlayerAlert] = useState(false);
+    const [deleteAlert, setDeleteAlert] = useState(false);
     const [deleteModal, setDeleteModal] = useState(false);
     const [deleteTransactionId, setDeleteTransactionId] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -33,11 +36,10 @@ const Transactions = () => {
     
     const deleteTransaction = async () => {
         try {
-            if(!deleteTransactionId && playerId) return;
+            if(!deleteTransactionId && !playerId) return;
             setLoading(true);
             const response = await sendJSON(urls['deletetransaction'], {deleteTransactionId, playerId}, 'DELETE');
             if(response) {
-                console.log(response?.message);
                 setTransactions(state => {
                     return state.map(item => {
                         const deletedState = item?.transactionId===deleteTransactionId || item?.deleted;
@@ -50,6 +52,7 @@ const Transactions = () => {
             }
         } catch(error) {
             console.log(error);
+            setDeleteAlert(true);
         } finally {
             setLoading(false);
             setDeleteTransactionId(null);
@@ -84,22 +87,35 @@ const Transactions = () => {
 
             const response = await sendJSON(urls['gettransactions'], {playerId});
             if(response) {
-                const history = [];
+                const transactionData = [];
                 const eachTotal = [];
                 const prevTotal = [];
+                const deletedCont = {};
                 let totalUnitsLastValue = 0;
                 for(const item of response.transactions) {
-                    const { transaction_id, units, note, action, transaction_date, added_by, deleted } = item;
-                    const addedBy = added_by;
-                    const transactionDate = transaction_date;
-                    const isDeleted = !!deleted;
+                    const {transactionId, units, note, action, createdAt, history} = item;
+                    const transactionDate = createdAt;
+                    let isDeleted = false;
+                    let addedBy = '';
 
-                    history.push({
-                        transactionId: transaction_id,
+                    //const {historyId, modifiedByEmployee, action, modifiedAt} = history[0];
+                    //const {employeeId, username} = modifiedByEmployee;
+                    const historyInObject = JSON.parse(history || '[]'); // history was in string
+                    for(const state of historyInObject) {
+                        if(state?.action === 'DELETED') {
+                            isDeleted = true;
+                            deletedCont[transactionId] = historyInObject?.reverse();
+                        } else if(state?.action === 'ADDED') {
+                            addedBy = state?.modifiedByEmployee?.username;
+                        }
+                    }
+
+                    transactionData.push({
+                        transactionId,
                         units,
                         note,
                         action,
-                        transactionDate,
+                        createdAt,
                         addedBy,
                         deleted: isDeleted
                     });
@@ -118,12 +134,11 @@ const Transactions = () => {
                     }
                 }
 
-                console.log('get history');
-
-                setTransactions(history.reverse());
-                setActions(Array(history.length).fill(false));
-                setEachTransaction(eachTotal.reverse());
-                setEachPrevTransaction(prevTotal.reverse());
+                setTransactions(transactionData.reverse()); // contain states of each transactions
+                setActions(Array(transactionData.length).fill(false)); // buttons for modifications
+                setEachTransaction(eachTotal.reverse()); // total of every transaction
+                setEachPrevTransaction(prevTotal.reverse()); // total of every previous transaction, deleted items are excluded
+                setDeletedTransactions(deletedCont);
             }
         } catch(error) {
             setPlayerAlert(true);
@@ -154,27 +169,48 @@ const Transactions = () => {
             <TouchableOpacity activeOpacity={0.9} onPress={() => displayActions(index)}>
                 <View 
                     className="w-full min-h-[70px] rounded-xl p-4 mb-2 bg-lightshade" 
-                    style={{backgroundColor: isOut ? '#f7614099': '#dcdcdc', opacity: isDeleted ? 0.5 : 1}}
+                    style={{backgroundColor: isOut ? '#f7614099': '#dcdcdc', opacity: isDeleted ? 0.7 : 1}}
                 >
-                    <View className="flex flex-row justify-between">
-                        <Text className="text-primary font-psemibold">{formattedDateAndTime(new Date(item?.transactionDate))}</Text>
-                        <Text className="text-primary/90 font-psemibold italic">Updated by: {item?.addedBy}</Text>
-                    </View>
-                    <View className="flex flex-row justify-between items-end">
-                        {!isDeleted && <Text className="font-psemibold text-[20px] text-primary leading-none">{prevStatus}</Text>}
-                        <Text className="font-psemibold text-[20px] text-primary leading-none">{insOuts}</Text>
-                        {!isDeleted && (
-                            <View className="flex flex-col">
-                                <Text className="font-psemibold text-primary leading-none">Status:</Text>
-                                <Text className="font-psemibold text-[20px] text-primary leading-none">{status}</Text>
+                    {!isDeleted ? (
+                        <View>
+                            <View className="flex flex-row justify-between">
+                                <Text className="text-primary font-psemibold">{formattedDateAndTime(new Date(item?.createdAt))}</Text>
+                                <Text className="text-primary/90 font-psemibold italic">Updated by: @{item?.addedBy}</Text>
                             </View>
-                        )}
-                    </View>
+                            <View className="flex flex-row justify-between items-end">
+                                <Text className="font-psemibold text-[20px] text-primary leading-none">{prevStatus}</Text>
+                                <Text className="font-psemibold text-[20px] text-primary leading-none">{insOuts}</Text>
+                                <View className="flex flex-col">
+                                    <Text className="font-psemibold text-primary leading-none">Status:</Text>
+                                    <Text className="font-psemibold text-[20px] text-primary leading-none">{status}</Text>
+                                </View>
+                            </View>
+                        </View>
+                    ) : (
+                        <View>
+                            <Text className="font-psemibold text-[20px] text-primary leading-none">{insOuts}</Text>
+                            {
+                                //const {historyId, modifiedByEmployee, action, modifiedAt} = deletedTransactions[item?.transactionId];
+                                //const {employeeId, username} = modifiedByEmployee;
+                                deletedTransactions[item?.transactionId]?.map(itemHistory => {
+                                    const {historyId, action, modifiedAt} = itemHistory;
+                                    const modifiedBy = action === 'DELETED' ? 'Deleted by: ' : action === 'ADDED' ? 'Added by: ' : '';
+                                    const fModifiedAt = formattedDateAndTime(new Date(itemHistory?.modifiedAt));
+                                    return (
+                                        <View key={historyId} className="w-full flex flex-row justify-between">
+                                            <Text className="font-psemibold text-primary leading-none">{modifiedBy}: @{itemHistory?.modifiedByEmployee?.username}</Text>
+                                            <Text>{fModifiedAt}</Text>
+                                        </View>
+                                    )
+                                })
+                            }
+                        </View>
+                    )}
                     {!isSelected ? 
                         item?.note ? <Text numberOfLines={1}>{item?.note}</Text> : null
                     :
                         <View className="w-full flex flex-col items-end">
-                            {item?.note ? <Text className="w-full" numberOfLines={1}>{item?.note}</Text> : null}
+                            {item?.note ? <Text className="w-full">{item?.note}</Text> : null}
                             {!isDeleted && (
                                 <TouchableOpacity className="mt-2" activeOpacity={0.9} onPress={()=>{
                                     setDeleteModal(true);
@@ -189,6 +225,8 @@ const Transactions = () => {
             </TouchableOpacity>
         );
     }
+
+    appInactivityLogout();
 
     if(loading) {
         return (
@@ -233,6 +271,7 @@ const Transactions = () => {
             </View>
 
             {playerAlert && <CustomAlert visible={true} onClose={() => router.push('(tabs)/players')} title="Player not Found" message="There's something wrong." />}
+            {deleteAlert && <CustomAlert visible={true} onClose={() => setDeleteAlert(false)} title="Delete Error" message="Deleting P&L requires a user privilege level of 2 or 3." />}
             {deleteModal && <CustomModal visible={true} onProceed={deleteTransaction} onClose={() => setDeleteModal(false)} title="Delete History" message="Are you sure do you want to remove transaction history." />}
             <StatusBar style="dark" />
         </SafeAreaView>

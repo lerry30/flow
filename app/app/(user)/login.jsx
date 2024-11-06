@@ -1,6 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
-import { useState } from 'react';
+import { useState, useLayoutEffect } from 'react';
 import { useRouter, Link } from 'expo-router';
 import { authUser } from '@/utils/auth';
 import { urls } from '@/constants/urls';
@@ -55,6 +55,10 @@ const LogIn = () => {
         setUserData({ username: userData?.username, password: '' });
         setLoading(false);
     }
+
+    useLayoutEffect(() => {
+        if(zUser.getState()?.username) router.push('(tabs)/players');
+    }, []);
 
     if(loading) {
         return (

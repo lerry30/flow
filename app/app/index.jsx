@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { saveToLocal, getFromLocal, removeFromLocal } from '@/utils/localStorage';
 import { useLayoutEffect } from 'react';
 //import { zUser } from '@/store/user';
+import { appInactivityLogout } from '@/utils/loggedOut';
 
 import BackgroundImage from '@/assets/background.png';
 import CustomButton from '@/components/CustomButton';
@@ -35,6 +36,8 @@ const HomePage = () => {
             }
         })();
     }, []);
+
+    appInactivityLogout();
 
     return (
         <View className="relative flex-1 size-screen min-h-screen px-4 pb-10 flex justify-end">

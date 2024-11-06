@@ -12,6 +12,7 @@ import {
     getMonthOperations,
     getOverall,
     getLastNet,
+    getHistory,
 } from '../controllers/profitNLossController.js';
 
 const router = express.Router();
@@ -26,5 +27,6 @@ router.post('/overall', protect, getOverall);
 router.post('/lastnet', protect, getLastNet);
 router.put('/update', protect, updateProfitNLoss);
 router.delete('/delete', protect, deleteProfitNLoss);
+router.post('/history', protect, getHistory);
 
 export default router;

@@ -21,7 +21,7 @@ const connectToDB = async () => {
                 password: process.env.DB_PASSWORD,
                 database: process.env.DB_NAME,
                 waitForConnections: true,
-                connectionLimit: 10,  // Adjust this according to your needs
+                connectionLimit: 20,
                 queueLimit: 0,
                 timezone: 'Z',
                 dateStrings: true,

@@ -30,14 +30,10 @@ CREATE TABLE transactions (
     id INT PRIMARY KEY AUTO_INCREMENT,
     player_id INT NOT NULL,
     units INT UNSIGNED NOT NULL,
-    action ENUM("IN", "OUT") NOT NULL,
+    action ENUM('IN', 'OUT') NOT NULL,
     note VARCHAR(255) DEFAULT '',
-    added_by INT NOT NULL,
-    deleted TINYINT(1) DEFAULT 0,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (player_id) REFERENCES players(id),
-    FOREIGN KEY (added_by) REFERENCES employees(id)
+    FOREIGN KEY (player_id) REFERENCES players(id)
 );
 
 CREATE TABLE profits (
@@ -60,7 +56,7 @@ CREATE TABLE losses (
     FOREIGN KEY (added_by) REFERENCES employees(id)
 );
 
-CREATE TABLE xcashflow (
+CREATE TABLE xcashflows (
     id INT PRIMARY KEY AUTO_INCREMENT,
     amount INT NOT NULL,
     note VARCHAR(255) NOT NULL,
@@ -68,6 +64,38 @@ CREATE TABLE xcashflow (
     entry_date DATE NOT NULL,
     entry_time TIME NOT NULL,
     FOREIGN KEY (added_by) REFERENCES employees(id)
+);
+
+CREATE TABLE pnl_histories (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    pnl_id INT NOT NULL,
+    amount INT NOT NULL,
+    note VARCHAR(255) NOT NULL,
+    modified_by INT NOT NULL,
+    action ENUM('ADDED', 'UPDATED', 'DELETED') NOT NULL,
+    category ENUM('xcashflow', 'revenue', 'expense') NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (modified_by) REFERENCES employees(id)
+);
+
+CREATE TABLE transaction_histories (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    transaction_id INT NOT NULL,
+    unit INT NOT NULL,
+    unit_action ENUM('IN', 'OUT') NOT NULL,
+    note VARCHAR(255) DEFAULT '',
+    modified_by INT NOT NULL,
+    action ENUM('ADDED', 'UPDATED', 'DELETED') NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (transaction_id) REFERENCES transactions(id),
+    FOREIGN KEY (modified_by) REFERENCES employees(id)
+);
+
+CREATE TABLE privilege_users (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    employee_id INT NOT NULL,
+    level ENUM('II', 'III') NOT NULL,
+    FOREIGN KEY (employee_id) REFERENCES employees(id)
 );
 
 -- Adding indexes for optimization

@@ -6,6 +6,7 @@ import { formattedDateAus } from '@/utils/datetime';
 import { sendJSON } from '@/utils/send';
 import { urls } from '@/constants/urls';
 import { toNumber, formattedNumber } from '@/utils/number';
+import { appInactivityLogout } from '@/utils/loggedOut';
 
 import AppLogo from '@/components/AppLogo';
 import FormField from '@/components/FormField';
@@ -49,7 +50,7 @@ const AddRevenue = () => {
                 const table = data[i];
                 if(toNumber(table?.amount) > 0) {
                     let initTitle = `Table ${i+1}`;
-                    table.note = table?.note?.trim();
+                    table.note = table?.note?.trim() || '';
                     if(i === data.length-1) {
                         if(!table?.note) throw new Error('Please add a note for other income.');
                         initTitle = 'Other Income';
@@ -81,6 +82,8 @@ const AddRevenue = () => {
         setOpenFields(state => [...state, value]);
         setItems(state => state.filter(item => item?.value !== value));
     }
+
+    appInactivityLogout();
 
     if(loading) {
         return (

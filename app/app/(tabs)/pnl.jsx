@@ -3,7 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Calendar } from 'react-native-calendars';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { formattedDate, toTimeZoneDate } from '@/utils/datetime';
+import { formattedDate } from '@/utils/datetime';
 import { useRouter } from 'expo-router';
 import { sendJSON } from '@/utils/send';
 import { urls } from '@/constants/urls';
@@ -13,11 +13,11 @@ import Header from '@/components/Header';
 
 const PNL = () => {
     const [selectedDate, setSelectedDate] = useState('');
-    const [currentMonth, setCurrentMonth] = useState(formattedDate(toTimeZoneDate(new Date())).slice(0, 7));
+    const [currentMonth, setCurrentMonth] = useState(formattedDate(new Date()).slice(0, 7));
     const [monthOperations, setMonthOperations] = useState({});
     const [loading, setLoading] = useState(false);
 
-    const today = toTimeZoneDate(new Date());
+    const today = new Date();
     const router = useRouter();
     const intervalId = useRef(undefined);
     const RELOADTIME = 10000; // should not be lower to 9 seconds
@@ -75,7 +75,9 @@ const PNL = () => {
                 <Calendar
                     current={`${currentMonth}-01`}
                     onDayPress={(day) => {
-                        if(day.timestamp < today.getTime()) {    
+                        const aDay = 1000 * 60 * 60 * 24;
+                        const tomorrow = day.timestamp + aDay;
+                        if(day.timestamp < tomorrow) {
                             setSelectedDate(day.dateString);
                             router.push(`(profitNLoss)/${day.dateString}`);
                         }
@@ -99,7 +101,6 @@ const PNL = () => {
                             selectedColor: 'teal'
                         }
                     }}
-                    timeZone="Australia/Brisbane"
                     theme={{
                         backgroundColor: '#ffffff',
                         calendarBackground: '#ffffff',

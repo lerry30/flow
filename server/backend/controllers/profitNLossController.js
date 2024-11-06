@@ -1,21 +1,19 @@
-import connectToDB from '../config/db.js';
-import * as mysqlStatements from '../mysql/statements.js';
+import * as pnlStmt from '../mysql/pnl.js';
+import * as pnlHistoryStmt from '../mysql/pnlHistory.js';
 import { toNumber } from '../utils/number.js';
 import { requestHandler } from '../utils/requestHandler.js';
 import { currentTime, isValidDate } from '../utils/datetime.js';
+import { insertPnLHistory } from '../helpers/pnlHistory.js';
 
 /*
    desc     Get Profits and losses
    route    POST /api/pnl/get
    access   private
 */
-const getProfitNLoss = requestHandler(async (req, res) => {
+const getProfitNLoss = requestHandler(async (req, res, database) => {
     const { date } = req.body;
 
-    const pool = await connectToDB();
-    const database = await pool.getConnection();
-    const [result] = await database.execute(mysqlStatements.getPnL, [date, date, date]);
-    await database.release();
+    const [result] = await database.execute(pnlStmt.getPnL, [date, date, date]);
 
     const revenues = [];
     const expenses = [];
@@ -25,7 +23,7 @@ const getProfitNLoss = requestHandler(async (req, res) => {
             revenues.push(data);
         } else if(data?.type==='loss') {
             expenses.push(data);
-        } else if(data?.type==='x') {
+        } else if(data?.type==='xcashflow') {
             xcashflow.push(data);
         }
     }
@@ -38,29 +36,22 @@ const getProfitNLoss = requestHandler(async (req, res) => {
    route    POST /api/pnl/selected
    access   private
 */
-const selectedProfitNLoss = requestHandler(async (req, res) => { 
+const selectedProfitNLoss = requestHandler(async (req, res, database) => { 
     const { category, id } = req.body;
 
-    if(!category || !id) {
-        throw {status: 400, message: 'There\'s something wrong.'}
-    }
-
-    const pool = await connectToDB();
-    const database = await pool.getConnection();
+    if(!category || !id) throw {status: 400, message: 'There\'s something wrong.'}
 
     let data = null;
     if(category === 'revenue') {
-        const [revenue] = await database.execute(mysqlStatements.revenue, [id]);
+        const [revenue] = await database.execute(pnlStmt.revenue, [id]);
         data = revenue?.length > 0 ? revenue[0] : {};
     } else if(category === 'expense') {
-        const [expense] = await database.execute(mysqlStatements.expense, [id]);
+        const [expense] = await database.execute(pnlStmt.expense, [id]);
         data = expense?.length > 0 ? expense[0] : {};
     } else if(category === 'xcashflow') {
-        const [xcashflow] = await database.execute(mysqlStatements.xcashflow, [id]);
+        const [xcashflow] = await database.execute(pnlStmt.xcashflow, [id]);
         data = xcashflow?.length > 0 ? xcashflow[0] : {};
     }
-
-    await database.release();
 
     res.status(200).json({[category]: data});
 });
@@ -70,7 +61,7 @@ const selectedProfitNLoss = requestHandler(async (req, res) => {
    route    POST /api/pnl/add/revenue
    access   private
 */
-const newRevenue = requestHandler(async (req, res) => {
+const newRevenue = requestHandler(async (req, res, database) => {
     const addedBy = req.user.employee_id;
     const date = req.body?.date?.trim();
     const tables = req.body?.tables;
@@ -91,22 +82,23 @@ const newRevenue = requestHandler(async (req, res) => {
 
     const time = currentTime();
 
-    const pool = await connectToDB();
-    const database = await pool.getConnection();
-
     const data = [];
     for(const table of nTables) {
         const amount = table?.amount;
         const note = table?.note;
-        const [newRevenue] = await database.execute(mysqlStatements.newRevenue,
+        const [newRevenue] = await database.execute(pnlStmt.newRevenue,
             [amount, note, date, time, addedBy]);
+        const revenueId = newRevenue?.insertId;
 
-        if(newRevenue?.insertId) {
-            data.push({amount, note, date, time, addedBy});
+        if(revenueId > 0) {
+            const isHistoryInserted = await insertPnLHistory(revenueId, amount, note, addedBy, 'added', 'revenue');
+            if(isHistoryInserted) {
+                data.push({amount, note, date, time, addedBy});
+            } else {
+                throw new Error('Unable to add new revenue');
+            }
         }
     }
-
-    await database.release();
 
     res.status(200).json(data);
 });
@@ -116,7 +108,7 @@ const newRevenue = requestHandler(async (req, res) => {
    route    POST /api/pnl/add/expense
    access   private
 */
-const newExpense = requestHandler(async (req, res) => {
+const newExpense = requestHandler(async (req, res, database) => {
     const addedBy = req.user.employee_id;
     const date = req.body?.date?.trim();
     const expenses = req.body?.expenses;
@@ -134,23 +126,23 @@ const newExpense = requestHandler(async (req, res) => {
     }
 
     const time = currentTime();
-
-    const pool = await connectToDB();
-    const database = await pool.getConnection();
-
     const data = [];
     for(const expense of nExpenses) {
         const amount = expense?.amount;
         const note = expense?.note;
-        const [newExpense] = await database.execute(mysqlStatements.newExpense,
+        const [newExpense] = await database.execute(pnlStmt.newExpense,
             [amount, note, date, time, addedBy]);
+        const expenseId = newExpense?.insertId;
 
-        if(newExpense?.insertId) {
-            data.push({amount, note, date, time, addedBy});
+        if(expenseId > 0) {
+            const isHistoryInserted = await insertPnLHistory(expenseId, amount, note, addedBy, 'added', 'expense');
+            if(isHistoryInserted) {
+                data.push({amount, note, date, time, addedBy});
+            } else {
+                throw new Error('Unable to add new expense.');
+            }
         }
     }
-
-    await database.release();
 
     res.status(200).json(data);
 });
@@ -160,7 +152,7 @@ const newExpense = requestHandler(async (req, res) => {
    route    POST /api/pnl/add/x
    access   private
 */
-const newX = requestHandler(async (req, res) => {
+const newX = requestHandler(async (req, res, database) => {
     const addedBy = req.user.employee_id;
     const date = req.body?.date?.trim();
     const amount = toNumber(req.body?.amount);
@@ -171,19 +163,19 @@ const newX = requestHandler(async (req, res) => {
     if(!note) throw {status: 400, message: 'There\'s something wrong. The note for X cash flow must not be empty.'};
 
     const time = currentTime();
-
-    const pool = await connectToDB();
-    const database = await pool.getConnection();
-
-    const [newExpense] = await database.execute(mysqlStatements.newXCashFlow,
+    const [newXCashFlow] = await database.execute(pnlStmt.newXCashFlow,
         [amount, note, date, time, addedBy]);
+    const xCashFlowId = newXCashFlow?.insertId;
 
-    await database.release();
-    if(newExpense?.insertId) {
-        res.status(200).json({amount, date, time, addedBy});
-    } else {
-        throw {status: 400, message: 'An error occurred while inserting the new X cash flow.'}
+    if(xCashFlowId > 0) {
+        const isHistoryInserted = await insertPnLHistory(xCashFlowId, amount, note, addedBy, 'added', 'xcashflow');
+        if(isHistoryInserted) {
+            res.status(200).json({amount, date, time, addedBy});
+            return;
+        }
     }
+    
+    throw {status: 400, message: 'An error occurred while inserting the new X cash flow.'}
 });
 
 /*
@@ -191,7 +183,8 @@ const newX = requestHandler(async (req, res) => {
    route    PUT /api/pnl/update
    access   private
 */
-const updateProfitNLoss = requestHandler(async (req, res) => {
+const updateProfitNLoss = requestHandler(async (req, res, database) => {
+    const userLevel = req.user?.level;
     const updatedBy = req.user.employee_id;
     const id = req.body?.id; 
     const amount = toNumber(req.body?.amount);
@@ -200,36 +193,36 @@ const updateProfitNLoss = requestHandler(async (req, res) => {
 
     const isXCashFlow = category === 'xcashflow';
 
+    if(userLevel !== 'III') throw {status: 401, message: 'Updating P&L requires a user privilege level of 3.'};
+
     if(!id || !category) throw {status: 400, message: 'There\'s something wrong. Please try again later.'}
     const fCategory = isXCashFlow ? 'X cash flow' : category[0].toUpperCase()+category.substring(1);
     if(!amount) throw {status: 400, message: `${fCategory} amount must have a value.`};
     if(amount <= 0 && !isXCashFlow) throw {status: 400, message: `${fCategory} amount must have a value greater than zero.`};
     if(!note) throw {status: 400, message: `${fCategory} note is empty.`};
 
+    const isHistoryInserted = await insertPnLHistory(id, amount, note, updatedBy, 'updated', category);
+    if(!isHistoryInserted) throw new Error('An error occurs while saving state of p&l details before the update');
+
     const time = currentTime();
-
-    const pool = await connectToDB();
-    const database = await pool.getConnection();
-
     let success = false;
     if(category === 'revenue') {
-        const [updatedRevenue] = await database.execute(mysqlStatements.updateRevenue,
+        const [updatedRevenue] = await database.execute(pnlStmt.updateRevenue,
             [amount, note, updatedBy, time, id]);
 
         success = updatedRevenue?.changedRows > 0;
     } else if(category === 'expense') {
-        const [updatedExpense] = await database.execute(mysqlStatements.updateExpense,
+        const [updatedExpense] = await database.execute(pnlStmt.updateExpense,
             [amount, note, updatedBy, time, id]);
 
         success = updatedExpense?.changedRows > 0;
     } else if(category === 'xcashflow') {
-        const [updatedXCashFlow] = await database.execute(mysqlStatements.updateXCashFlow,
+        const [updatedXCashFlow] = await database.execute(pnlStmt.updateXCashFlow,
             [amount, note, updatedBy, time, id]);
 
         success = updatedXCashFlow?.changedRows > 0;
     }
 
-    await database.release();
     if(success) {
         res.status(200).json({
             expense: amount,
@@ -237,9 +230,10 @@ const updateProfitNLoss = requestHandler(async (req, res) => {
             time,
             updatedBy
         });
-    } else {
-        throw {status: 400, message: 'There\'s something wrong. Please try again later.'};
+        return;
     }
+
+    throw {status: 400, message: 'There\'s something wrong. Please try again later.'};
 });
 
 /*
@@ -247,39 +241,33 @@ const updateProfitNLoss = requestHandler(async (req, res) => {
    route    DELETE /api/pnl/delete
    access   private
 */
-const deleteProfitNLoss = requestHandler(async (req, res) => {
+const deleteProfitNLoss = requestHandler(async (req, res, database) => {
+    const userLevel = req.user?.level;
+    const deletedBy = req.user.employee_id;
     const id = req.body?.id; 
     const category = req.body?.category?.trim();
 
+    if(userLevel !== 'III') throw {status: 401, message: 'Deleting P&L requires a user privilege level of 3.'};
     if(!id || !category) throw {status: 400, message: 'There\'s something wrong. Please try again later.'}
 
-    const pool = await connectToDB();
-    const database = await pool.getConnection();
+    const isHistoryInserted = await insertPnLHistory(id, 0, '', deletedBy, 'deleted', category);
+    if(!isHistoryInserted) throw new Error('An error occurs while saving state of p&l details before the delete.');
 
+    let isDeleted = false;
     if(category === 'revenue') {
-        const [deletedRevenue] = await database.execute(mysqlStatements.deleteRevenue, [id]);
-
-        await database.release();
-        if(deletedRevenue?.affectedRows > 0) {
-            res.status(200).json({message: 'Revenue successfully deleted.'});
-            return;
-        }
+        const [deletedRevenue] = await database.execute(pnlStmt.deleteRevenue, [id]);
+        isDeleted = deletedRevenue?.affectedRows > 0;
     } else if(category === 'expense') {
-        const [deletedExpense] = await database.execute(mysqlStatements.deleteExpense, [id]);
-
-        await database.release();
-        if(deletedExpense?.affectedRows > 0) {
-            res.status(200).json({message: 'Expense successfully deleted.'});
-            return;
-        }
+        const [deletedExpense] = await database.execute(pnlStmt.deleteExpense, [id]);
+        isDeleted = deletedExpense?.affectedRows > 0;
     } else if(category === 'xcashflow') {
-        const [deletedX] = await database.execute(mysqlStatements.deleteXCashFlow, [id]);
+        const [deletedX] = await database.execute(pnlStmt.deleteXCashFlow, [id]);
+        isDeleted = deletedX?.affectedRows > 0;
+    }
 
-        await database.release();
-        if(deletedX?.affectedRows > 0) {
-            res.status(200).json({message: 'X cash flow successfully deleted.'});
-            return;
-        }
+    if(isDeleted) {
+        res.status(200).json({message: `${category[0]?.toUpperCase()+category.substring(1)} successfully deleted.`});
+        return;
     }
 
     throw {status: 400, message: 'There\'s something wrong. Please try again later.'};
@@ -290,17 +278,11 @@ const deleteProfitNLoss = requestHandler(async (req, res) => {
    route    POST /api/pnl/monthoperations
    access   private
 */
-const getMonthOperations = requestHandler(async (req, res) => {
+const getMonthOperations = requestHandler(async (req, res, database) => {
     const { currentMonth } = req.body;
     if(!currentMonth) throw {status: 400, message: 'There\'s something wrong.'}
 
-    const pool = await connectToDB();
-    const database = await pool.getConnection();
-
-    const [results] = await database.execute(mysqlStatements.monthOperations, [currentMonth, currentMonth]);
-    
-    await database.release();
-
+    const [results] = await database.execute(pnlStmt.monthOperations, [currentMonth, currentMonth]);
     res.status(200).json({operations: results});
 });
 
@@ -309,13 +291,8 @@ const getMonthOperations = requestHandler(async (req, res) => {
    route    POST /api/pnl/overall
    access   private
 */
-const getOverall = requestHandler(async (req, res) => {
-    const pool = await connectToDB();
-    const database = await pool.getConnection();
-
-    const [results] = await database.query(mysqlStatements.overall, []);
-    await database.release();
-
+const getOverall = requestHandler(async (req, res, database) => {
+    const [results] = await database.query(pnlStmt.overall, []);
     let net = 0;
     for(const data of results) {
         if(data?.type==='profit') {
@@ -335,12 +312,8 @@ const getOverall = requestHandler(async (req, res) => {
    route    POST /api/pnl/nettoday
    access   private
 */
-const getLastNet = requestHandler(async (req, res) => {
-    const pool = await connectToDB();
-    const database = await pool.getConnection();
-
-    const [results] = await database.query(mysqlStatements.lastNet, []);
-    await database.release();
+const getLastNet = requestHandler(async (req, res, database) => {
+    const [results] = await database.query(pnlStmt.lastNet, []);
 
     let net = 0;
     let date = '';
@@ -358,6 +331,21 @@ const getLastNet = requestHandler(async (req, res) => {
     res.status(200).json({last: net, date});
 });
 
+const getHistory = requestHandler(async (req, res, database) => {
+    const id = toNumber(req.body?.id);
+    const category = req.body?.category?.trim();
+    
+    const validCategories = ['xcashflow', 'revenue', 'expense'];
+
+    if(!id || !category) throw new Error('Either id or category is undefined');
+    if(!validCategories.includes(category)) throw new Error('Category is undefined');
+
+    const [result] = await database.execute(pnlHistoryStmt.getPNLHistory, [id, category]);
+    res.status(200).json({history: result});
+
+    //throw new Error('Sudden error occurs probably executing sql statement');
+});
+
 export {
     getProfitNLoss,
     newRevenue,
@@ -369,4 +357,5 @@ export {
     getMonthOperations,
     getOverall,
     getLastNet,
+    getHistory,
 };
