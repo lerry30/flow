@@ -20,7 +20,7 @@ const PNL = () => {
     const today = new Date();
     const router = useRouter();
     const intervalId = useRef(undefined);
-    const RELOADTIME = 10000; // should not be lower to 9 seconds
+    const RELOADTIME = 5000; // should not be lower to 9 seconds
 
     const getDaysOfOperationsInAMonth = async () => {
         try {
@@ -75,8 +75,7 @@ const PNL = () => {
                 <Calendar
                     current={`${currentMonth}-01`}
                     onDayPress={(day) => {
-                        const aDay = 1000 * 60 * 60 * 24;
-                        const tomorrow = day.timestamp + aDay;
+                        const tomorrow = today?.getTime();
                         if(day.timestamp < tomorrow) {
                             setSelectedDate(day.dateString);
                             router.push(`(profitNLoss)/${day.dateString}`);
