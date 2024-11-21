@@ -14,16 +14,18 @@ import FormField from '@/components/FormField';
 import CustomButton from '@/components/CustomButton';
 import Feather from '@expo/vector-icons/Feather';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import CustomAlert from '@/components/CustomAlert';
+import ErrorField from '@/components/ErrorField';
+//import CustomAlert from '@/components/CustomAlert';
 
 const Record = () => {
-    const [player, setPlayer] = useState({name: '', status: 0, addedBy: '', createdAt: ''});
+    const [player, setPlayer] = useState({name: '', maxLimit: 0, note: '', status: 0, addedBy: '', createdAt: ''});
     const [amount, setAmount] = useState(0);
+    const [errorData, setErrorData] = useState({amount: ''});
     const [note, setNote] = useState('');
     const [action, setAction] = useState({plus: false, minus: true});
     const [loading, setLoading] = useState(false);
     const [playerAlert, setPlayerAlert] = useState(false);
-    const [amountAlert, setAmountAlert] = useState(false);
+    //const [amountAlert, setAmountAlert] = useState(false);
 
     const playerId = useLocalSearchParams()?.playerId;
     const router = useRouter();
@@ -37,8 +39,21 @@ const Record = () => {
             const nAmount = toNumber(amount);
             const nNote = note?.trim();
             if(nAmount === 0) {
-                setAmountAlert(true);
-                return;
+                //setAmountAlert(true);
+                setErrorData({amount: 'Unable to record the input, possibly due to a zero value.'});
+                throw new Error('Unable to record the input, possibly due to a zero value.');
+            }
+
+            if(action?.minus) {
+                const limit = toNumber(player?.maxLimit)*-1; // I just make it negative
+                const newBalance = toNumber(player?.status)-nAmount; // I just make it subtraction since nAmount should be negative to decrease the balance more
+                if(limit < 0) {
+                    if(newBalance < limit) {// since limit is negative(-4000)
+                        const message = `The maximum input allowed for ${player?.name} is limited to ${limit}`;
+                        setErrorData({amount: message});
+                        throw new Error(message);
+                    }
+                }
             }
 
             isClicked.current = true;
@@ -49,8 +64,9 @@ const Record = () => {
                 router.push('(tabs)/players');
             }
         } catch(error) {
-            setAmountAlert(true);
+            //setAmountAlert(true);
             console.log(error?.message);
+            setErrorData({amount: error?.message});
             isClicked.current = false;
         } finally {
             setLoading(false);
@@ -64,10 +80,10 @@ const Record = () => {
 
             const response = await sendJSON(urls['getplayer'], {playerId});
             if(response) {
-                const {firstname, lastname, status, added_by, created_at} = response.player;
+                const {firstname, lastname, max_limit, note, status, added_by, created_at} = response.player;
                 const name = `${firstname} ${lastname}`;
                 const createdAt = formattedDateAndTime(new Date(created_at));
-                setPlayer({name, status, addedBy: added_by, createdAt});
+                setPlayer({name, maxLimit: max_limit, note, status, addedBy: added_by, createdAt});
             }
         } catch(error) {
             setPlayerAlert(true);
@@ -97,7 +113,7 @@ const Record = () => {
     return (
         <SafeAreaView>
             <ScrollView>
-                <View className="flex-1 w-full min-h-screen flex flex-col px-4 bg-white">
+                <View className="flex-1 w-full min-h-screen flex flex-col px-4 pb-4 bg-white">
                     <View className="w-[90px]">
                         <AppLogo style={{width: 'fit-content'}}/>
                     </View>
@@ -105,6 +121,10 @@ const Record = () => {
                     <Text className="font-pbold text-lg">Stats</Text>
                     <View className="w-full flex flex-col justify-center">
                         <Text className="text-xl text-primary">{player?.name}</Text>
+                        <Text className={`text-primary ${player?.maxLimit?'flex':'hidden'}`}>
+                            Limit: {formattedNumber(player?.maxLimit)}
+                        </Text>
+                        <Text className={`text-primary/80 ${player?.note?'flex':'hidden'}`}>{player?.note}</Text>
                         <Text className="text-primary/80 italic">Added by: {player?.addedBy}</Text>
                         <Text className="text-primary">{player?.createdAt}</Text>
                         <View className="w-full bg-lightshade rounded-xl px-4 pt-4 pb-2 my-4">
@@ -146,6 +166,7 @@ const Record = () => {
                         keyboardType="numeric"
                         contClassName="mt-4"
                     />
+                    <ErrorField error={errorData?.amount || ''} /> 
                     <FormField
                         title="Note"
                         value={note}
@@ -157,7 +178,7 @@ const Record = () => {
                 </View>
             </ScrollView>
             {playerAlert && <CustomAlert visible={true} onClose={()=>router.push('(tabs)/players')} title="Player not Found" message="There's something wrong." />}
-            {amountAlert && <CustomAlert visible={true} onClose={()=>setAmountAlert(false)} title="Number of Units" message="An error occurred. Unable to record the input, possibly due to a zero value. Please try again." />}
+            {/*{amountAlert && <CustomAlert visible={true} onClose={()=>setAmountAlert(false)} title="Number of Units" message="An error occurred. Unable to record the input, possibly due to a zero value. Please try again." />}*/}
             <StatusBar style="dark" />
         </SafeAreaView>
     );
