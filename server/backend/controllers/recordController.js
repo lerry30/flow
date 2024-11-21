@@ -27,6 +27,7 @@ const addRecord = requestHandler(async (req, res, database) => {
 
     const nAmount = toNumber(amount);
     const balance = toNumber(player[0].status);
+    const maxLimit = toNumber(player[0].max_limit)*-1; // make it negative
 
     let newBalance = balance;
     let dbAction = '';
@@ -37,6 +38,9 @@ const addRecord = requestHandler(async (req, res, database) => {
     } else if(action?.minus) { //payment
         dbAction = 'IN';
         newBalance = balance - nAmount;
+        if(maxLimit < 0)
+            if(newBalance < maxLimit) 
+                throw {status: 400, message: `The maximum input allowed is limited to ${maxLimit}`};
     }
 
     // status = balance in players table
