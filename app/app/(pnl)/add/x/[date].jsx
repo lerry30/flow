@@ -140,7 +140,7 @@ const AddXCashFlow = () => {
                             value={data?.note}
                             placeholder="X Note"
                             onChange={value => setData(data => ({...data, note: value }))}
-                            contClassName=""
+                            contClassName="pt-2"
                         />
                         <ErrorField error={error?.note || ''} />
                     </View>
