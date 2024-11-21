@@ -51,6 +51,7 @@ export default function RootLayout() {
                 <Stack.Screen name="(pnl)/add/x/[date]" options={{ headerShown: false }} />
                 <Stack.Screen name="(pnl)/update/[category]/[id]" options={{ headerShown: false }} />
                 <Stack.Screen name="(pnl)/history/[category]/[date]/[id]" options={{ headerShown: false }} />
+                <Stack.Screen name="(player)/edit/[playerId]" options={{ headerShown: false }} />
                 <Stack.Screen name="+not-found" />
             </Stack>
             <StatusBar style="dark" />
