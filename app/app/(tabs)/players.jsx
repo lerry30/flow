@@ -23,7 +23,7 @@ const Players = () => {
 
     const router = useRouter();
     const intervalId = useRef(undefined);
-    const RELOADTIME = 10000; // should not be lower to 9 seconds
+    const RELOADTIME = 5000; // should not be lower to 9 seconds
 
     const displayActions = (index) => {
         setActions(state => state.map((value, i) => i===index && !value));
@@ -87,7 +87,10 @@ const Players = () => {
         const isSelected = !!actions[index];
         return (
             <TouchableOpacity activeOpacity={0.9} onPress={() => displayActions(index)} className="relative" style={{marginBottom: isSelected ? 50 : 8}}>
-                <View className="w-[120px] h-[50px] flex flex-row justify-between items-end px-4 py-2 rounded-b-xl bg-lightshade" style={{position: 'absolute', right: 0, bottom: isSelected ? -40 : 0}}>
+                <View className="w-[180px] h-[50px] flex flex-row justify-between items-end px-4 py-2 rounded-b-xl bg-lightshade" style={{position: 'absolute', right: 0, bottom: isSelected ? -40 : 0}}>
+                    <TouchableOpacity activeOpacity={0.9} onPress={()=>router.push(`(player)/edit/${item.playerId}`)}>
+                        <FontAwesome5 name="user-edit" size={24} color="black" />
+                    </TouchableOpacity>
                     <TouchableOpacity activeOpacity={0.9} onPress={()=>router.push(`(transactions)/${item.playerId}`)}>
                         <FontAwesome5 name="scroll" size={24} color="#2e2e2e" />
                     </TouchableOpacity>
