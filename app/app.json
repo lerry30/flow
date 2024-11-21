@@ -2,7 +2,7 @@
   "expo": {
     "name": "Flow",
     "slug": "Flow",
-    "version": "1.1.0",
+    "version": "1.3.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "app",
@@ -28,7 +28,13 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-updates",
+        {
+          "username": "lerry"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
@@ -41,6 +47,15 @@
         "projectId": "760cc873-ebac-41f1-b467-1883ca926a0f"
       }
     },
-    "owner": "lerry"
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/760cc873-ebac-41f1-b467-1883ca926a0f"
+    },
+    "owner": "lerry",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }
