@@ -15,7 +15,7 @@ import AppLogo from '@/components/AppLogo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 const Transactions = () => {
-    const [player, setPlayer] = useState({name: '', status: 0, addedBy: '', createdAt: ''});
+    const [player, setPlayer] = useState({name: '', maxLimit: 0, note: '', status: 0, addedBy: '', createdAt: ''});
     const [transactions, setTransactions] = useState([]);
     const [eachTransaction, setEachTransaction] = useState([]);
     const [eachPrevTransaction, setEachPrevTransaction] = useState([]);
@@ -67,10 +67,10 @@ const Transactions = () => {
 
             const response = await sendJSON(urls['getplayer'], {playerId});
             if(response) {
-                const {firstname, lastname, status, added_by, created_at} = response.player;
+                const {firstname, lastname, max_limit, note, status, added_by, created_at} = response.player;
                 const name = `${firstname} ${lastname}`;
                 const createdAt = formattedDateAndTime(new Date(created_at));
-                setPlayer({name, status, addedBy: added_by, createdAt});
+                setPlayer({name, maxLimit: max_limit, note, status, addedBy: added_by, createdAt});
             }
         } catch(error) {
             setPlayerAlert(true);
@@ -246,6 +246,10 @@ const Transactions = () => {
                 <Text className="font-pbold text-lg">History</Text>
                 <View className="w-full flex-1">
                     <Text className="text-xl text-primary">{player?.name}</Text>
+                    <Text className={`text-primary ${player?.maxLimit?'flex':'hidden'}`}>
+                        Limit: {formattedNumber(player?.maxLimit)}
+                    </Text>
+                    <Text className={`text-primary/80 ${player?.note?'flex':'hidden'}`}>{player?.note}</Text>
                     <Text className="text-primary/80 italic">Added by: {player?.addedBy}</Text>
                     <Text className="text-primary">{player?.createdAt}</Text>
 
