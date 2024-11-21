@@ -147,7 +147,7 @@ const UpdatePnL = () => {
                                 value={data?.note}
                                 placeholder="Revenue Note"
                                 onChange={value => setData(data => ({...data, note: value }))}
-                                contClassName=""
+                                contClassName="pt-2"
                             />
                             <ErrorField error={error?.note || ''} />
                         </View>
@@ -170,7 +170,7 @@ const UpdatePnL = () => {
                                 value={data?.note}
                                 placeholder="Expense Note"
                                 onChange={value => setData(data => ({...data, note: value }))}
-                                contClassName=""
+                                contClassName="pt-2"
                             />
                             <ErrorField error={error?.note || ''} />
                         </View>
@@ -220,7 +220,7 @@ const UpdatePnL = () => {
                                     value={data?.note}
                                     placeholder="Expense Note"
                                     onChange={value => setData(data => ({...data, note: value }))}
-                                    contClassName=""
+                                    contClassName="pt-2"
                                 />
                                 <ErrorField error={error?.note || ''} />
                             </View>
