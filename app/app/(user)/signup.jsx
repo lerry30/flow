@@ -84,7 +84,7 @@ const SignUp = () => {
                         value={userData?.firstname}
                         placeholder="First Name"
                         onChange={value => setUserData(data => ({...data, firstname: value }))}
-                        contClassName=""
+                        contClassName="pt-2"
                     />
                     <ErrorField error={error?.firstname || ''} />
                     <FormField
@@ -92,7 +92,7 @@ const SignUp = () => {
                         value={userData?.lastname}
                         placeholder="Last Name"
                         onChange={value => setUserData(data => ({...data, lastname: value }))}
-                        contClassName=""
+                        contClassName="pt-2"
                     />
                     <ErrorField error={error?.lastname || ''} />
                     <FormField
@@ -100,7 +100,7 @@ const SignUp = () => {
                         value={userData?.username}
                         placeholder="example123"
                         onChange={value => setUserData(data => ({...data, username: value }))}
-                        contClassName=""
+                        contClassName="pt-2"
                     />
                     <ErrorField error={error?.username || ''} />
                     <FormField
@@ -108,7 +108,7 @@ const SignUp = () => {
                         value={userData?.password}
                         placeholder="Password"
                         onChange={value => setUserData(data => ({...data, password: value }))}
-                        contClassName=""
+                        contClassName="pt-2"
                     />
                     <ErrorField error={error?.password || ''} />
                     <CustomButton title="Sign Up" onPress={() => createUser()} contClassName="w-full mt-4" />
