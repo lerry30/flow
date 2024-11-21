@@ -92,3 +92,12 @@ export const toTimeZoneDate = (date) => {
 
     return new Date(overall);
 }
+
+export const getFirstMonday = (year) => {
+    const initDate = new Date(`${year}-1-1`); // January 1st of the given year
+    const dayOfWeek = initDate.getDay(); // Sunday = 0, Monday = 1, ...
+    const offset = dayOfWeek > 1 ? 9 : 2; // Days to add to get to Monday
+    return new Date(`${year}-1-${offset-dayOfWeek}`); // First Monday of January
+};
+
+
