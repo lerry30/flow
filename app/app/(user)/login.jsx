@@ -79,7 +79,7 @@ const LogIn = () => {
                         value={userData?.username}
                         placeholder="example123"
                         onChange={value => setUserData(data => ({...data, username: value }))}
-                        contClassName=""
+                        contClassName="mt-2"
                     />
                     <ErrorField error={error?.username || ''} />
                     <FormField
@@ -87,7 +87,7 @@ const LogIn = () => {
                         value={userData?.password}
                         placeholder="Password"
                         onChange={value => setUserData(data => ({...data, password: value }))}
-                        contClassName=""
+                        contClassName="mt-2"
                     />
                     <ErrorField error={error?.password || ''} />
                     <CustomButton title="Log In" onPress={() => login()} contClassName="w-full mt-4" />
