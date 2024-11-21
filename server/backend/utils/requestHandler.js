@@ -16,7 +16,9 @@ export const requestHandler = (controller) => {
             console.log('Error: ', message);
             if(error instanceof Error) message = 'There\'s something wrong.';
 
-            await database.rollback();
+            if(database) {
+                await database.rollback();
+            }
 
             res.status(status).json({message});
         } finally {
