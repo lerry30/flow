@@ -19,9 +19,11 @@ CREATE TABLE employees(
 CREATE TABLE players(
 	id INT PRIMARY KEY AUTO_INCREMENT, 
     info_id INT NOT NULL,
+    max_limit INT DEFAULT 0 NOT NULL,
+    note VARCHAR(255) NOT NULL,
     status INT DEFAULT 0,
-    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     added_by INT NOT NULL,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY(info_id) REFERENCES info(id),
     FOREIGN KEY (added_by) REFERENCES employees(id)
 );
@@ -105,3 +107,6 @@ CREATE INDEX idx_player_id ON transactions(player_id);
 -- [mysqld]
 -- default-time-zone = '+10:00'
 
+
+-- ALTER TABLE players ADD note VARCHAR(255) NOT NULL;
+-- ALTER TABLE players ADD max_limit INT NOT NULL;
