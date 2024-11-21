@@ -13,8 +13,10 @@ import { requestHandler } from '../utils/requestHandler.js';
 const addNewPlayer = requestHandler(async (req, res, database) => {
     const userLevel = req.user.level;
     const addedBy = req.user.employee_id;
-    const firstname = req.body?.firstname?.trim();
-    const lastname = req.body?.lastname?.trim();
+    const firstname = String(req.body?.firstname).trim();
+    const lastname = String(req.body?.lastname).trim();
+    const maxLimit = toNumber(req.body?.maxLimit);
+    const note = String(req.body?.note).trim();
     const amount = toNumber(req?.body?.amount);
 
     // require level 3 privilege
@@ -34,7 +36,7 @@ const addNewPlayer = requestHandler(async (req, res, database) => {
 
     if(infoId > 0) {
         const nAmount = toNumber(amount);
-        const [newPlayerResult] = await database.execute(playerStmt.newPlayer, [infoId, nAmount, addedBy]);
+        const [newPlayerResult] = await database.execute(playerStmt.newPlayer, [infoId, maxLimit, note, nAmount, addedBy]);
         const playerId = newPlayerResult?.insertId;
        
         if(playerId > 0) {
@@ -116,9 +118,55 @@ const search = requestHandler(async (req, res, database) => {
     res.status(200).json({players});
 });
 
+/*
+   desc     Update Player
+   route    PUT /api/players/put
+   access   private
+*/
+const updatePlayer = requestHandler(async (req, res, database) => {
+    const userLevel = req.user.level;
+    const playerId = toNumber(req.body?.playerId);
+    const firstname = String(req.body?.firstname).trim();
+    const lastname = String(req.body?.lastname).trim();
+    const maxLimit = toNumber(req.body?.maxLimit);
+    const note = String(req.body?.note).trim();
+
+    const [player] = await database.execute(playerStmt.player, [playerId]);
+
+    if(player?.length > 0) {
+        const selectedPlayer = player[0];
+        if(selectedPlayer?.firstname !== firstname ||
+            selectedPlayer?.lastname !== lastname ||
+            selectedPlayer?.max_limit !== maxLimit) {
+            
+            // require level 3 privilege
+            if(userLevel !== 'III') throw {status: 401, message: 'Modify access: Level 3 required.'};
+
+            // check the current balance if it is lower than the new set max limited value for balance
+            if((maxLimit*-1) > selectedPlayer?.status) 
+                throw {status: 400, message: `The new limited balance exceeds the player's current balance(${selectedPlayer?.status}).`};
+        }
+
+        // last name is not required for privacy reason
+        if(!firstname) throw {status: 400, message: 'All fields are required.'};
+
+        const [updatingInfoResult] = await database.execute(infoStmt.updateInfo, [firstname, lastname, selectedPlayer?.info_id]);
+        if(updatingInfoResult?.affectedRows > 0) {
+            const [updatingPlayerResult] = await database.execute(playerStmt.updatePlayer, [maxLimit, note, playerId]); 
+            if(updatingPlayerResult?.affectedRows > 0) {
+                res.status(200).json({firstname, lastname, maxLimit, note});
+                return;
+            }
+        }
+    }
+    
+    throw {status: 400, message: 'There\'s something wrong.'};
+});
+
 export { 
     addNewPlayer,
     getPlayers,
     getPlayer,
-    search
+    search,
+    updatePlayer,
 };
