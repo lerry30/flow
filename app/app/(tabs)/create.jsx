@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useFocusEffect } from '@react-navigation/native';
 import { useState, useCallback, useRef } from 'react';
-import { toNumber } from '@/utils/number';
+import { toNumber, formattedNumber } from '@/utils/number';
 import { sendJSON } from '@/utils/send';
 import { urls } from '@/constants/urls';
 import { useRouter } from 'expo-router';
@@ -16,8 +16,8 @@ import CustomButton from '@/components/CustomButton';
 import AntDesign from '@expo/vector-icons/AntDesign';
 
 const Create = () => {
-    const [playerData, setPlayerData] = useState({firstname: '', lastname: ''});
-    const [error, setError] = useState({firstname: '', lastname: '', default: ''});
+    const [playerData, setPlayerData] = useState({firstname: '', lastname: '', maxLimit: 0, note: ''});
+    const [error, setError] = useState({firstname: '', lastname: '', maxLimit: '', default: ''});
     const [amount, setAmount] = useState(0);
     const [loading, setLoading] = useState(false);
 
@@ -28,8 +28,11 @@ const Create = () => {
         try {
             if(isClicked.current) return;
             setLoading(true);
-            playerData.firstname = playerData?.firstname?.trim();
-            playerData.lastname = playerData?.lastname?.trim();
+            setError({firstname: '', lastname: '', maxLimit: '', default: ''});
+
+            playerData.firstname = String(playerData?.firstname).trim();
+            playerData.lastname = String(playerData?.lastname).trim();
+            playerData.note = String(playerData?.note).trim();
             if(!playerData?.firstname) {
                 setError(data => ({...data, firstname: 'First name is empty.'}));
                 throw new Error('Error: Input fields are required.');
@@ -37,7 +40,9 @@ const Create = () => {
 
             const data = {
                 firstname: playerData.firstname,
-                lastname: playerData.lastname, 
+                lastname: playerData.lastname,
+                maxLimit: toNumber(playerData?.maxLimit),
+                note: playerData.note,
                 amount: toNumber(amount),
             };
 
@@ -77,7 +82,7 @@ const Create = () => {
     return (
         <SafeAreaView>
             <ScrollView>
-                <View className="flex-1 w-full min-h-screen flex flex-col px-4 bg-white">
+                <View className="flex-1 w-full min-h-screen flex flex-col px-4 pb-6 bg-white">
                     <Header />
                     <Text className="font-pbold text-lg py-2">Add New Player</Text>
                     <FormField
@@ -93,11 +98,30 @@ const Create = () => {
                         value={playerData?.lastname}
                         placeholder="Last Name"
                         onChange={value => setPlayerData(data => ({...data, lastname: value }))}
-                        contClassName=""
+                        contClassName="pt-2"
                     />
                     <ErrorField error={error?.lastname || ''} />
+                    <FormField
+                        title="Limit"
+                        value={formattedNumber(playerData?.maxLimit)}
+                        placeholder="Limit"
+                        onChange={value => {
+                            const input = toNumber(value);
+                            setPlayerData(data => ({...data, maxLimit: input }))
+                        }}
+                        keyboardType="numeric"
+                        contClassName="pt-2"
+                    />
+                    <ErrorField error={error?.maxLimit || ''} />
+                    <FormField
+                        title="Note"
+                        value={playerData?.note}
+                        placeholder="Note"
+                        onChange={value => setPlayerData(data => ({...data, note: value }))}
+                        contClassName="pt-2"
+                    />
 
-                    <Text className="text-base text-primary font-pmedium">Input</Text>
+                    <Text className="text-base text-primary font-pmedium mt-4">Input</Text>
                     <View className="w-full h-16 px-6 rounded-full border-2 border-primary focus:border-secondary flex flex-row items-center">
                         <AntDesign name="plus" size={24} color="#2e2e2e" />
                         <TextInput
