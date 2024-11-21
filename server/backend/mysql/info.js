@@ -9,3 +9,4 @@ export const info = `
 `;
 
 export const newInfo = 'INSERT INTO info (firstname, lastname) VALUES (?, ?);';
+export const updateInfo = 'UPDATE info SET firstname=?, lastname=? WHERE id=?;';
