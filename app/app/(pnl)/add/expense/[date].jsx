@@ -7,6 +7,7 @@ import { sendJSON } from '@/utils/send';
 import { urls } from '@/constants/urls';
 import { toNumber, formattedNumber } from '@/utils/number';
 import { appInactivityLogout } from '@/utils/loggedOut';
+import { listOfExpenses } from '@/constants/expenses';
 
 import AppLogo from '@/components/AppLogo';
 import FormField from '@/components/FormField';
@@ -15,7 +16,6 @@ import ErrorField from '@/components/ErrorField';
 import DropDownPicker from 'react-native-dropdown-picker';
 
 const AddExpense = () => {
-    const listOfExpenses = ['Venue', 'Staff', 'Shops', 'Meals', 'Miscellaneous', 'Other'];
     const [data, setData] = useState(Array(listOfExpenses).fill({amount: 0, note: ''}));
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -49,7 +49,6 @@ const AddExpense = () => {
                     if(fieldName.trim().toLowerCase() === 'other' && !expense.note) throw new Error('Please add a note for other expense.');
                     expense.note = expense?.note?.trim() || '';
                     const note = `${fieldName}${expense?.note && `: ${expense?.note}`}`;
-                    console.log(note);
                     nData.expenses.push({amount: expense.amount, note});
                 }
             }
