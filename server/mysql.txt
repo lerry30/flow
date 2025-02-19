@@ -4,8 +4,9 @@ USE flow_database;
 CREATE TABLE info(
 	id INT PRIMARY KEY AUTO_INCREMENT, 
 	firstname VARCHAR(255) NOT NULL, 
-	lastname VARCHAR(255) NOT NULL, 
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	lastname VARCHAR(255) NOT NULL,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE TABLE employees(
@@ -13,6 +14,8 @@ CREATE TABLE employees(
     info_id INT NOT NULL,
 	username VARCHAR(255) NOT NULL UNIQUE,
 	password VARCHAR(255) NOT NULL, 
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY(info_id) REFERENCES info(id)
 );
 
@@ -23,6 +26,7 @@ CREATE TABLE players(
     note VARCHAR(255) NOT NULL,
     status INT DEFAULT 0,
     added_by INT NOT NULL,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY(info_id) REFERENCES info(id),
     FOREIGN KEY (added_by) REFERENCES employees(id)
@@ -35,6 +39,7 @@ CREATE TABLE transactions (
     action ENUM('IN', 'OUT') NOT NULL,
     note VARCHAR(255) DEFAULT '',
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (player_id) REFERENCES players(id)
 );
 
@@ -106,7 +111,3 @@ CREATE INDEX idx_player_id ON transactions(player_id);
 
 -- [mysqld]
 -- default-time-zone = '+10:00'
-
-
--- ALTER TABLE players ADD note VARCHAR(255) NOT NULL;
--- ALTER TABLE players ADD max_limit INT NOT NULL;

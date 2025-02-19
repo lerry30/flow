@@ -1,5 +1,5 @@
-export const serverDomain = 'https://flowserver.lerry.site';
-//export const serverDomain = 'http://192.168.0.104:3000';
+//export const serverDomain = 'https://flowserver.lerry.site';
+export const serverDomain = 'http://192.168.0.104:3000';
 
 export const urls = {
     signup: `${serverDomain}/api/users`,

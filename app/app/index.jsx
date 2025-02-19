@@ -16,8 +16,8 @@ const HomePage = () => {
     const router = useRouter();
     //const saveUser = zUser(state => state?.setUser);
 
-    const APP_STATUS = 'preview';
-    //const APP_STATUS = 'development';
+    //const APP_STATUS = 'preview';
+    const APP_STATUS = 'development';
     // save user and posts data to store
     useLayoutEffect(() => {
         (async () => {

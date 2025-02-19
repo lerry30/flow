@@ -126,7 +126,7 @@ const Summary = () => {
             if(pnl?.category==='Profit') {
                 revenue = revenue + toNumber(pnl?.amount);
             } else if(pnl?.category==='Loss') {
-                let key = '';
+                let key = pnl?.note;
                 for(const expenseType of expTypes) {
                     if(pnl?.note?.toLowerCase()?.includes(expenseType)) {
                         key = expenseType;
